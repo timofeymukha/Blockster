@@ -4,6 +4,8 @@ using ImmutableArrays
 using Edges
 
 export Block, make_block_edges!, setedge!, create_points!, create_cells!, point_index, npoints, ncells 
+
+" Type that defines a single block of the multi-block mesh."
 type Block
     vertexLabels::Vector{Int64}
     vertices::Vector{Vector3{Float64}}

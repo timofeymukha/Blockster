@@ -2,6 +2,7 @@ module blockMesh
 
 using JSON
 using ImmutableArrays
+using MeshPrimitives
 using Edges
 using Blocks
 
@@ -60,13 +61,55 @@ read_boundary!(dict, patchNames, patchBlockFaces)
 check_patch_vertex_labels(patchNames, patchBlockFaces, vertices)
 
 
-println("Creating blocks...")
 
 function create_topology()
     
 end
 
+
+
+"Type defining the mesh"
+type Mesh
+    "The json file to read the mesh properties from"
+    dict
+
+    "The blocks defining the mesh" 
+    blocks::Vector{Block}
+
+    "The points of the mesh"
+    points::Vector{point}
+
+    "The vertices of the mesh, used to define the blocks"
+    vertices::Vector{point}
+end
+
+println("Creating blocks...")
+
 blocks = Vector{Block}(nBlocks)
+
+function point_cell_addressing(cells::Array{Int64, 2}, nPoints::Int64)
+
+    # Number of cells each point is included in
+    pointCellAddressing = Vector{Vector{Int64}}(nPoints)
+
+    for i in 1:nPoints
+        pointCellAddressing[i] = Vector{Int64}(0)
+    end
+
+    # For each cells
+    for cellI in 1:size(cells, 1)
+
+        # For each point in the cell
+        for pointI in 1:size(cells[cellI], 2)
+
+            # Add current cell to the addressing list
+            push!(pointCellAddressing[pointI], cellI)
+        end
+
+    end
+
+    return pointCellAddressing
+end
 
 for blockI in 1:nBlocks
     println("    Block number ", blockI)
@@ -89,6 +132,9 @@ for blockI in 1:nBlocks
     # Create the cells
     println("        Creating cells")
     create_cells!(blocks[blockI])
+    println("        Done")
 end
+
+pointCellsAddressing = point_cell_addressing(blocks[1].cells, size(blocks[1].points, 1))
 
 end
