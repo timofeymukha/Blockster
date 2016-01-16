@@ -12,7 +12,7 @@ dict = JSON.parsefile("dictJSON")
 nBlocks = size(dict["blocks"], 1)
 nVertices = size(dict["vertices"], 1)
 
-vertices = Vector{point}(nVertices)
+vertices = Vector{Point}(nVertices)
 
 for i in 1:nVertices
     vertices[i] = dict["vertices"][i]
@@ -76,10 +76,10 @@ type Mesh
     blocks::Vector{Block}
 
     "The points of the mesh"
-    points::Vector{point}
+    points::Vector{Point}
 
     "The vertices of the mesh, used to define the blocks"
-    vertices::Vector{point}
+    vertices::Vector{Point}
 end
 
 println("Creating blocks...")
@@ -110,7 +110,7 @@ function point_cell_addressing(cells::Array{Int64, 2}, nPoints::Int64)
     return pointCellAddressing
 end
 
-function patch_face_cells(faces::Vector{face}, patchId::Int64,
+function patch_face_cells(faces::Vector{Face}, patchId::Int64,
                           pointCellAddressing::Vector{Vector{Int64}})
 
     faceCells = Vector{Int64}(size(faces,1))

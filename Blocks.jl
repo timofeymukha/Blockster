@@ -1,6 +1,6 @@
 module Blocks
 
-using FixedSizeArrays
+using FixedSizeArrays: Vec
 using Edges
 using MeshPrimitives
 
@@ -10,20 +10,20 @@ export Block, make_block_edges!, setedge!, create_points!, create_cells!,
 " Type that defines a single block of the multi-block mesh."
 type Block
     vertexLabels::Vector{Int64}
-    vertices::Vector{point}
-    points::Vector{point}
+    vertices::Vector{Point}
+    points::Vector{Point}
     cells::Array{Int64,2}
-    edgePoints::Vector{Vector{point}}
+    edgePoints::Vector{Vector{Point}}
     edgeWeights::Vector{Vector{Float64}}
     curvedEdges::Vector{CurvedEdge}
     nCells::Vec{3, Int64}
 end
 
 Block() = Block(zeros(8),
-                Vector{point}(8),
-                Vector{point}(0),
+                Vector{Point}(8),
+                Vector{Point}(0),
                 zeros(1,8),
-                Vector{Vector{point}}(12),
+                Vector{Vector{Point}}(12),
                 Vector{Vector{Float64}}(12),
                 Vector{CurvedEdge}(0),
                 zeros(3))

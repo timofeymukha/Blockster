@@ -1,6 +1,6 @@
 
 type LineEdge <: CurvedEdge
-    points::Vector{point}
+    points::Vector{Point}
     startVertex::Int64
     endVertex::Int64
 end

@@ -1,34 +1,59 @@
 module MeshPrimitives
 
-using FixedSizeArrays
+using FixedSizeArrays: Vec
 
-export point, face, cell
+export Point, Face, Cell
 
 
-" Type for a point in 3d space. An alias for a vector of Float64 of size 3"
-typealias point Vec{3, Float64}
+" Type for a Point in 3d space. An alias for a vector of Float64 of size 3"
+typealias Point Vec{3, Float64}
 
 """
-Type for a quad-face. Holds a list of point-labels. An alias for a vector of 
+Type for a quad-face. Holds a list of Point-labels. An alias for a vector of 
 Int64 of size 4.
 """
-typealias face Vec{4, Int64 }
+typealias Face Vec{4, Int64 }
 
 """
-Type for a hex-cell. Holds a list of point-labels. An alias for a vector of 
+Type for a hex-cell. Holds a list of Point-labels. An alias for a vector of 
 Int64 of size 8.
 """
-typealias cell Vec{8, Int64 }
+typealias Cell Vec{8, Int64 }
 
 """
-Test whether two faces consist of the same points.
+Return the faces of a cell.
 
 **Parameters:**
 
-    1. faceA::face
+    1. cell::Cell
+    The cell to return the faces for.
+
+**Returns:**
+    
+    1. Vector{face}
+    A vector of faces.
+"""
+function faces(c::Cell)
+    faces = Vector{Face}(6)
+
+    faces[1] = Face([c[1], c[2], c[3], c[4]])
+    faces[2] = Face([c[5], c[6], c[7], c[8]])
+    faces[3] = Face([c[7], c[3], c[4], c[8]])
+    faces[4] = Face([c[6], c[5], c[1], c[2]])
+    faces[5] = Face([c[4], c[1], c[5], c[8]])
+    faces[6] = Face([c[3], c[7], c[6], c[2]])
+
+end
+
+"""
+Test whether two faces consist of the same Points.
+
+**Parameters:**
+
+    1. faceA::Face
     The first face.
 
-    2. faceB::face
+    2. faceB::Face
     The second face.
 
 **Returns:**
@@ -36,21 +61,21 @@ Test whether two faces consist of the same points.
     1. Bool
     True if the two faces consist of the same vertices.
 """
-function samePoints(faceA::face, faceB::face)
+function samePoints(faceA::Face, faceB::Face)
 
-    for pointI in 1:4
+    for PointI in 1:4
         # Count the occurences of this point in faceA
         faceAOcc = 0
         for i in 1:4
-            if faceA[pointI] == faceA[i]
+            if faceA[PointI] == faceA[i]
                 faceAOcc += 1
             end
         end
 
-        # Count the occurences of this point in faceA
+        # Count the occurences of this Point in faceA
         faceBOcc = 0
         for i in 1:4
-            if faceB[pointI] == faceB[i]
+            if faceB[PointI] == faceB[i]
                 faceBOcc += 1
             end
         end
