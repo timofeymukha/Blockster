@@ -1,27 +1,29 @@
 module Blocks
 
-using ImmutableArrays
+using FixedSizeArrays
 using Edges
+using MeshPrimitives
 
-export Block, make_block_edges!, setedge!, create_points!, create_cells!, point_index, npoints, ncells 
+export Block, make_block_edges!, setedge!, create_points!, create_cells!,
+       point_index, npoints, ncells 
 
 " Type that defines a single block of the multi-block mesh."
 type Block
     vertexLabels::Vector{Int64}
-    vertices::Vector{Vector3{Float64}}
-    points::Vector{Vector3{Float64}}
+    vertices::Vector{point}
+    points::Vector{point}
     cells::Array{Int64,2}
-    edgePoints::Vector{Vector{Vector3{Float64}}}
+    edgePoints::Vector{Vector{point}}
     edgeWeights::Vector{Vector{Float64}}
     curvedEdges::Vector{CurvedEdge}
-    nCells::Vector3{Int64}
+    nCells::Vec{3, Int64}
 end
 
 Block() = Block(zeros(8),
-                Vector{Vector3{Float64}}(8),
-                Vector{Vector3{Float64}}(0),
+                Vector{point}(8),
+                Vector{point}(0),
                 zeros(1,8),
-                Vector{Vector{Vector3{Float64}}}(12),
+                Vector{Vector{point}}(12),
                 Vector{Vector{Float64}}(12),
                 Vector{CurvedEdge}(0),
                 zeros(3))

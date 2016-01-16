@@ -1,6 +1,6 @@
 
 type LineEdge <: CurvedEdge
-    points::Vector{Vector3{Float64}}
+    points::Vector{point}
     startVertex::Int64
     endVertex::Int64
 end

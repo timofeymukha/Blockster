@@ -20,7 +20,7 @@ function compare(edge1::CurvedEdge, edge2::CurvedEdge)
 end
 
 function line_divide(edge::CurvedEdge, nDivisions::Int64)
-    points = Vector{Vector3{Float64}}(nDivisions+1)
+    points = Vector{point}(nDivisions+1)
     divisions = Vector{Float64}(nDivisions+1)
     
     divisions[end] = 1

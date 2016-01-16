@@ -1,6 +1,6 @@
 module Edges
 
-using ImmutableArrays
+using MeshPrimitives
 
 include("edges/curvededge.jl")
 include("edges/lineedge.jl")

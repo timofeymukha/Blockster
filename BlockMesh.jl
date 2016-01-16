@@ -1,7 +1,6 @@
 module blockMesh
 
 using JSON
-using ImmutableArrays
 using MeshPrimitives
 using Edges
 using Blocks
@@ -13,7 +12,7 @@ dict = JSON.parsefile("dictJSON")
 nBlocks = size(dict["blocks"], 1)
 nVertices = size(dict["vertices"], 1)
 
-vertices = Vector{Vector3{Float64}}(nVertices)
+vertices = Vector{point}(nVertices)
 
 for i in 1:nVertices
     vertices[i] = dict["vertices"][i]
@@ -109,6 +108,36 @@ function point_cell_addressing(cells::Array{Int64, 2}, nPoints::Int64)
     end
 
     return pointCellAddressing
+end
+
+function patch_face_cells(faces::Vector{face}, patchId::Int64,
+                          pointCellAddressing::Vector{Vector{Int64}})
+
+    faceCells = Vector{Int64}(size(faces,1))
+
+    # For each face determine the cell
+    for faceI in 1:size(faces, 1)
+        currFace = faces[faceI]
+
+        # For each point of the face
+        for facePointI in 1:size(currFace, 1)
+            
+            facePointCells = pointCellAddressing[currFace[facePointI]]
+
+            # For each cell that this point is part of
+            for cellI in 1:size(facePointCells, 1)
+
+                #For each face of the cells check if it is the same as faceI
+
+            end
+
+        end
+
+
+
+    end
+
+    return facecells
 end
 
 for blockI in 1:nBlocks
