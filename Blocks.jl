@@ -3,6 +3,7 @@ module Blocks
 using FixedSizeArrays: Vec
 using Edges
 using MeshPrimitives
+import Base.convert
 
 export Block, make_block_edges!, setedge!, create_points!, create_cells!,
        point_index, npoints, ncells 
@@ -12,7 +13,7 @@ type Block
     vertexLabels::Vector{Int64}
     vertices::Vector{Point}
     points::Vector{Point}
-    cells::Array{Int64,2}
+    cells::Vector{Cell}
     edgePoints::Vector{Vector{Point}}
     edgeWeights::Vector{Vector{Float64}}
     curvedEdges::Vector{CurvedEdge}
@@ -22,12 +23,15 @@ end
 Block() = Block(zeros(8),
                 Vector{Point}(8),
                 Vector{Point}(0),
-                zeros(1,8),
+                Vector{Cell}(0),
                 Vector{Vector{Point}}(12),
                 Vector{Vector{Float64}}(12),
                 Vector{CurvedEdge}(0),
                 zeros(3))
 
+function convert(::Type{Cell}, block::Block)
+    return convert(Cell, block.vertexLabels)
+end
 
 
 function make_block_edges!(block::Block)
@@ -286,21 +290,24 @@ end
 
 function create_cells!(block::Block)
 
-    block.cells = zeros(ncells(block), 8)
+    resize!(block.cells, ncells(block))
 
     cellNo::Int64 = 1
 
     for k in 1:block.nCells[3]
         for j in 1:block.nCells[2]
             for i in 1:block.nCells[1]
-                block.cells[cellNo, 1] =  point_index(block, i, j, k)
-                block.cells[cellNo, 2] =  point_index(block, i+1, j, k)
-                block.cells[cellNo, 3] =  point_index(block, i+1, j+1, k)
-                block.cells[cellNo, 4] =  point_index(block, i, j+1, k)
-                block.cells[cellNo, 5] =  point_index(block, i, j, k+1)
-                block.cells[cellNo, 6] =  point_index(block, i+1, j, k+1)
-                block.cells[cellNo, 7] =  point_index(block, i+1, j+1, k+1)
-                block.cells[cellNo, 8] =  point_index(block, i, j+1, k+1)
+
+                block.cells[cellNo] = Cell([
+                                           point_index(block, i, j, k),
+                                           point_index(block, i+1, j, k),
+                                           point_index(block, i+1, j+1, k),
+                                           point_index(block, i, j+1, k),
+                                           point_index(block, i, j, k+1),
+                                           point_index(block, i+1, j, k+1),
+                                           point_index(block, i+1, j+1, k+1),
+                                           point_index(block, i, j+1, k+1)
+                                           ])
             
                 cellNo += 1  
             end

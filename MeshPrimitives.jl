@@ -2,7 +2,7 @@ module MeshPrimitives
 
 using FixedSizeArrays: Vec
 
-export Point, Face, Cell
+export Point, Face, Cell, faces, samePoints
 
 
 " Type for a Point in 3d space. An alias for a vector of Float64 of size 3"
@@ -43,6 +43,7 @@ function faces(c::Cell)
     faces[5] = Face([c[4], c[1], c[5], c[8]])
     faces[6] = Face([c[3], c[7], c[6], c[2]])
 
+    return faces
 end
 
 """
