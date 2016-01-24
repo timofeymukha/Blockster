@@ -2,7 +2,7 @@ module MeshPrimitives
 
 using FixedSizeArrays: Vec
 
-export Point, Face, Cell, faces, samePoints
+export Point, Face, Cell, faces, samepoints
 
 
 " Type for a Point in 3d space. An alias for a vector of Float64 of size 3"
@@ -62,7 +62,7 @@ Test whether two faces consist of the same Points.
     1. Bool
     True if the two faces consist of the same vertices.
 """
-function samePoints(faceA::Face, faceB::Face)
+function samepoints(faceA::Face, faceB::Face)
 
     for PointI in 1:4
         # Count the occurences of this point in faceA

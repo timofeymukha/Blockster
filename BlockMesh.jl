@@ -59,11 +59,6 @@ patchBlockFaces = Vector{Vector{Face}}(0)
 read_boundary!(dict, patchNames, patchBlockFaces)
 check_patch_vertex_labels(patchNames, patchBlockFaces, vertices)
 
-
-
-
-
-
 "Type defining the mesh"
 type Mesh
     "The json file to read the mesh properties from"
@@ -132,7 +127,7 @@ function patch_face_cells(faces::Vector{Face},
                 # For each face of the cells check if it is the same as faceI
                 for cellIFaceI in 1:size(cellIFaces, 1)
 
-                    if samePoints(cellIFaces[cellIFaceI], faces[faceI])
+                    if samepoints(cellIFaces[cellIFaceI], faces[faceI])
                         found = true
                         faceCells[faceI] = facePointCells[cellI]
                     end
@@ -183,14 +178,15 @@ function create_topology(cells::Vector{Cell},
     # Declare the array of faces
     faces = Vector{Face}(maxFaces)
 
-    nFaces = 0
+    nFaces = 1
 
     # Get point to cell addressing
     pointCellAddr = point_cell_addressing(cells, nPoints)
 
     found = false
 
-    # Go through all cells
+    # Add the non-boundary faces of all cells to the face list
+    # For the cellsAsFaces array
     for cellI in 1:size(cells, 1)
 
         cellIFaces = cellFaces[cellI]
@@ -291,6 +287,89 @@ function create_topology(cells::Vector{Cell},
         end
 
     end
+
+    # Do the boundary faces
+
+    patchSizes = Vector{Int64}(size(boundaryFaces, 1))
+    patchStarts = Vector{Int64}(size(boundaryFaces, 1))
+
+    for patchI in 1:size(boundaryFaces, 1)
+
+        patchFaces = boundaryFaces[patchI]
+
+        currPatchFaceCells = patch_face_cells(patchFaces, cellFaces,
+                                              pointCellAddressing)
+
+        currPatchStart = nFaces
+
+
+        for faceI in 1:size(patchFaces, 1)
+            
+            currFace = patchFaces[faceI]
+
+
+            # Get the cell on the inside corresponding to this face
+            cellInside = currPatchFaceCells[faceI]
+
+            # Get the faces of that cell
+            facesOfCellInside = cellFaces[cellInside]
+
+            for cellFaceI = 1:6
+                #size(facesOfCellInside, 1)
+                #println(cellFaceI)
+                if samepoints(facesOfCellInside[cellFaceI], currFace)
+                println(currFace)
+                println(facesOfCellInside[cellFaceI])
+                    if cellsAsFaces[cellInside][cellFaceI] >= 0
+                        error("set_topology(): Trying to specify a boundary face
+                              which is either an internal face or already
+                              belongs to some other patch.")
+                    end
+
+                    found = true
+
+
+                    # Set the patch face to the corresponding cell-face
+                    faces[nFaces] = facesOfCellInside[cellFaceI]
+
+                    break
+
+                end
+            end
+
+            if !found
+                error("set_topology(): face does not seem to belong to a cell,
+                        which, according to addressing, should be next to it")
+            end
+
+            nFaces += 1
+        end
+
+        patchSizes[patchI] = nFaces - currPatchStart
+        patchStarts[patchI] = currPatchStart
+
+    end
+
+    println(faces)
+    # Take care of "non-existing faces", put them into the default patch
+
+    for cellI in size(cellsAsFaces, 1)
+
+        currCellFaces = cellsAsFaces[cellI]
+
+        for faceI in size(currCellFaces, 1)
+
+            if currCellFaces[faceI] == -1
+                currCellFaces[faceI] = nFaces
+              # FIX THIS !!!
+              #  faces[nFaces] = cellFaces[cellI][faceI]
+
+                nFaces += 1
+            end
+        end
+    end
+
+    resize!(faces, nFaces)
 
 end
 
