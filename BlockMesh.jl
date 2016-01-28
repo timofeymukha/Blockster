@@ -147,7 +147,8 @@ function patch_face_cells(faces::Vector{Face},
         end
 
         if !found
-            error("patch_face_cells: Cound not find internal cell.")
+            error("patch_face_cells(): Cound not find internal cell for face
+                   $currFace.")
         end
     end
 
@@ -186,13 +187,13 @@ function create_topology(cells::Vector{Cell},
     found = false
 
     # Add the non-boundary faces of all cells to the face list
-    # For the cellsAsFaces array
+    # Form the cellsAsFaces array
     for cellI in 1:size(cells, 1)
 
         cellIFaces = cellFaces[cellI]
 
         neiCells = fill(-1, size(cellIFaces))
-        faceOfNeiCells = fill(-1, size(cellIFaces))
+        faceOfNeiCell = fill(-1, size(cellIFaces))
 
         nNeighbours = 0
         
@@ -218,14 +219,16 @@ function create_topology(cells::Vector{Cell},
                     currNei = currNeighbours[neiI]
 
                     # Reject neighbours with lower index
-                    if currNei < cellI
+                    if currNei > cellI
 
                         # The list of faces to search through
                         neiFaces = cellFaces[currNei]
+                        #println(neiFaces)
 
                         for neiFaceI in 1:size(neiFaces, 1)
                             
-                            if neiFaces[neiFaceI] == currFace
+                            if samepoints(neiFaces[neiFaceI], currFace)
+                            #if neiFaces[neiFaceI] == currFace
                                 #Match!
                                 found = true
 
@@ -255,13 +258,13 @@ function create_topology(cells::Vector{Cell},
 
         # Add the faces in the increasing order of neighbours
         for neiSearch in 1:nNeighbours
-            
+           
             # Find the lowest neighbour which is still valid
             nextNei = -1
-            minNei = size(cells, 1)
+            minNei = size(cellsAsFaces, 1)
 
-            for ncI in 1:size(neiCells)
-                if neiCells[ncI] > -1 && neiCells[ncI] < minNei
+            for ncI in 1:size(neiCells, 1)
+                if neiCells[ncI] > -1 && neiCells[ncI] <= minNei
                     nextNei = ncI
                     minNei = neiCells[ncI]
                 end
@@ -269,7 +272,7 @@ function create_topology(cells::Vector{Cell},
 
             if nextNei > -1
                 # Note that nFaces acts as the current face to fill also
-                faces[nFaces] = curFaces[nextNei]
+                faces[nFaces] = cellIFaces[nextNei]
 
                 # Set cell-face and cell-neighbour-face to current face label
                 cellsAsFaces[cellI][nextNei] = nFaces
@@ -288,6 +291,9 @@ function create_topology(cells::Vector{Cell},
 
     end
 
+    println(cellsAsFaces)
+    println(faces)
+
     # Do the boundary faces
 
     patchSizes = Vector{Int64}(size(boundaryFaces, 1))
@@ -296,6 +302,7 @@ function create_topology(cells::Vector{Cell},
     for patchI in 1:size(boundaryFaces, 1)
 
         patchFaces = boundaryFaces[patchI]
+        patchName = boundaryPatchNames[patchI]
 
         currPatchFaceCells = patch_face_cells(patchFaces, cellFaces,
                                               pointCellAddressing)
@@ -315,15 +322,16 @@ function create_topology(cells::Vector{Cell},
             facesOfCellInside = cellFaces[cellInside]
 
             for cellFaceI = 1:6
-                #size(facesOfCellInside, 1)
-                #println(cellFaceI)
                 if samepoints(facesOfCellInside[cellFaceI], currFace)
-                println(currFace)
-                println(facesOfCellInside[cellFaceI])
                     if cellsAsFaces[cellInside][cellFaceI] >= 0
-                        error("set_topology(): Trying to specify a boundary face
-                              which is either an internal face or already
-                              belongs to some other patch.")
+                        error("""set_topology(): Trying to specify a boundary face
+                              $currFace
+                              on the face of cell $cellInside, which is either 
+                              an internal face or already belongs to some other
+                              patch.
+                              
+                              This is face $faceI of patch $patchI named
+                              $patchName.""")
                     end
 
                     found = true
@@ -331,6 +339,7 @@ function create_topology(cells::Vector{Cell},
 
                     # Set the patch face to the corresponding cell-face
                     faces[nFaces] = facesOfCellInside[cellFaceI]
+                    cellsAsFaces[cellInside][cellFaceI] = nFaces
 
                     break
 
@@ -350,26 +359,26 @@ function create_topology(cells::Vector{Cell},
 
     end
 
-    println(faces)
     # Take care of "non-existing faces", put them into the default patch
-
-    for cellI in size(cellsAsFaces, 1)
+    for cellI in 1:size(cellsAsFaces, 1)
 
         currCellFaces = cellsAsFaces[cellI]
 
-        for faceI in size(currCellFaces, 1)
-
+        for faceI in 1:size(currCellFaces, 1)
             if currCellFaces[faceI] == -1
                 currCellFaces[faceI] = nFaces
-              # FIX THIS !!!
-              #  faces[nFaces] = cellFaces[cellI][faceI]
+                faces[nFaces] = cellFaces[cellI][faceI]
 
                 nFaces += 1
             end
         end
     end
 
+    println(cellsAsFaces)
+
     resize!(faces, nFaces)
+
+    println(faces)
 
 end
 

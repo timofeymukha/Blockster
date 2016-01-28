@@ -76,7 +76,7 @@ function samepoints(faceA::Face, faceB::Face)
         # Count the occurences of this Point in faceA
         faceBOcc = 0
         for i in 1:4
-            if faceB[PointI] == faceB[i]
+            if faceA[PointI] == faceB[i]
                 faceBOcc += 1
             end
         end
