@@ -92,9 +92,10 @@ function point_cell_addressing(cells::Vector{Cell}, nPoints::Int64)
 
         # For each point in the cell
         for pointI in 1:size(cells[cellI], 1)
-
+            
+            currPoint = cells[cellI][pointI]
             # Add current cell to the addressing list
-            push!(pointCellAddressing[pointI], cellI)
+            push!(pointCellAddressing[currPoint], cellI)
         end
 
     end
@@ -116,18 +117,21 @@ function patch_face_cells(faces::Vector{Face},
 
         # For each point of the face
         for facePointI in 1:size(currFace, 1)
-            
             facePointCells = pointCellAddressing[currFace[facePointI]]
+
+            #println(facePointCells)
 
             # For each cell that this point is part of
             for cellI in 1:size(facePointCells, 1)
 
-                cellIFaces = cellFaces[cellI]
+                cellIFaces = cellFaces[facePointCells[cellI]]
+                #println(cellIFaces)
 
                 # For each face of the cells check if it is the same as faceI
                 for cellIFaceI in 1:size(cellIFaces, 1)
 
                     if samepoints(cellIFaces[cellIFaceI], faces[faceI])
+                #       println("match!")
                         found = true
                         faceCells[faceI] = facePointCells[cellI]
                     end
@@ -184,6 +188,10 @@ function create_topology(cells::Vector{Cell},
     # Get point to cell addressing
     pointCellAddr = point_cell_addressing(cells, nPoints)
 
+    #println("nPoints: $nPoints")
+    #println("cells: $cells")
+    #println("pointCellsAddr: $pointCellAddr")
+
     found = false
 
     # Add the non-boundary faces of all cells to the face list
@@ -223,7 +231,6 @@ function create_topology(cells::Vector{Cell},
 
                         # The list of faces to search through
                         neiFaces = cellFaces[currNei]
-                        #println(neiFaces)
 
                         for neiFaceI in 1:size(neiFaces, 1)
                             
@@ -290,9 +297,6 @@ function create_topology(cells::Vector{Cell},
         end
 
     end
-
-    println(cellsAsFaces)
-    println(faces)
 
     # Do the boundary faces
 
@@ -373,12 +377,11 @@ function create_topology(cells::Vector{Cell},
             end
         end
     end
+    #println(cellsAsFaces)
 
-    println(cellsAsFaces)
+    resize!(faces, nFaces-1)
 
-    resize!(faces, nFaces)
-
-    println(faces)
+    #println(faces)
 
 end
 
