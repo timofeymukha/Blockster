@@ -173,7 +173,7 @@ function create_topology(cells::Vector{Cell},
 
     for i in 1:size(cellFaces,1)
 
-        cellFaces[i] = MeshPrimitives.faces(cells[i])
+        cellFaces[i] = cellfaces(cells[i])
         maxFaces += size(cellFaces[i],1)
 
         # Set the associated face label to -1, to mark as undefined
@@ -363,6 +363,8 @@ function create_topology(cells::Vector{Cell},
 
     end
 
+    defaultPatchStart = nFaces
+
     # Take care of "non-existing faces", put them into the default patch
     for cellI in 1:size(cellsAsFaces, 1)
 
@@ -382,6 +384,27 @@ function create_topology(cells::Vector{Cell},
     resize!(faces, nFaces-1)
 
     #println(faces)
+    return patchSizes, patchStarts, defaultPatchStart,
+           faces, nFaces, cellsAsFaces
+
+end
+
+function calc_merge_info(blocks::Vector{Block})
+
+    println("Creating block offsets")
+
+    nBlocs = size(blocks, 1)
+    blockOffsets = Vector{Int64}(nBlocks)
+    
+    nPoints = 0
+    nCells = 0
+
+    for blockI in 1:nBlocks
+        blockOffsets[blockI] = nPoints
+        nPoints += size(blocks[blockI].points, 1)
+        nCells += size(blocks[blockI].cells, 1)
+    end
+
 
 end
 
@@ -409,8 +432,9 @@ for blockI in 1:nBlocks
     println("        Done")
 end
 
+# Create mesh form the blocks
 pointCellAddressing = point_cell_addressing(convert(Vector{Cell}, blocks), size(vertices, 1))
-blockFaces = [faces(convert(Cell, blocks[i])) for i in 1:nBlocks]
+blockFaces = [cellfaces(convert(Cell, blocks[i])) for i in 1:nBlocks]
 patchFaceCells = patch_face_cells(patchBlockFaces[1], blockFaces, pointCellAddressing)
 
 blocksAsCells =Vector{Cell}(nBlocks)
@@ -419,7 +443,48 @@ for i in 1:nBlocks
     blocksAsCells[i] = convert(Cell, blocks[i])
 end
 
-create_topology(blocksAsCells, patchBlockFaces, patchNames, size(vertices, 1)) 
+patchSizes, patchStarts, defaultPatchStart, faces, nFaces, cellsAsFaces =
+    create_topology(blocksAsCells,
+                    patchBlockFaces,
+                    patchNames,
+                    size(vertices, 1))
 
+nDefaultFaces = nFaces - defaultPatchStart
 
+if nDefaultFaces > 0
+    warn("Undefined block faces present in the mesh description")
+end
+
+owner = fill(-1, size(faces, 1))
+neighbour = fill(-1, size(faces, 1))
+
+markedFaces = fill(false, size(faces, 1))
+
+nInternalFaces = 0
+
+for cellI in 1:size(cellsAsFaces, 1)
+    
+    cellFaces = cellsAsFaces[cellI]
+
+    for faceI in 1:size(cellFaces, 1)
+        if cellFaces[faceI] < 1
+            faceLabel = cellFaces[cellI]
+            error("Illegal face label $faceLabel in cell $cellI")
+        end
+
+        if !markedFaces[cellFaces[faceI]]
+            # First visit: owner
+            owner[cellFaces[faceI]] = cellI
+            markedFaces[cellFaces[faceI]] = true
+        else
+            # Second visit: neighbour
+            neighbour[cellFaces[faceI]] = cellI
+            nInternalFaces += 1
+        end
+    end
+end
+
+resize!(neighbour, nInternalFaces)
+
+calc_merge_info(blocks)
 end
