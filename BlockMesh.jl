@@ -389,7 +389,12 @@ function create_topology(cells::Vector{Cell},
 
 end
 
-function calc_merge_info(blocks::Vector{Block})
+function calc_merge_info(blocks::Vector{Block},
+                         blockPoints::Vector{Point},
+                         blockFaces::Vector{Face},
+                         blockCellsAsFaces::Vector{Vector{Int64}},
+                         faceOwnerBlocks::Vector{Int64},
+                         faceNeighbourBlocks::Vector{Int64})
 
     println("Creating block offsets")
 
@@ -405,6 +410,34 @@ function calc_merge_info(blocks::Vector{Block})
         nCells += size(blocks[blockI].cells, 1)
     end
 
+    mergeList = fill(-1, nPoints)
+
+    glueMergePairs = Vector{Vector{Vector{Int64}}}(size(blockFaces, 1)) 
+
+    for blockFaceI in 1:size(blockFaces, 1)
+
+        # Grab the owner of the face
+        blockPLabel = faceOwnerBlocks[blockFaceI]
+        blockPPoints = blocks[blockPLabel].points
+        blockPFaces = blockCellsAsFaces[blockPLabel]
+
+        # Insure that one of the faces of the owner-block
+        # is in fact blockFaceI
+        foundFace = false
+
+        for blockPFaceLabel in 1:size(blockPFaces, 1)
+            if blockPFaces[blockPFaceLabel] == blockFaceI
+                foundFace = true
+                break
+            end
+        end
+
+        if !foundFace
+            error("calc_merge_inf(): cannot find merge face
+                   for block $blockPLabel")
+         end
+    end
+    
 
 end
 
@@ -486,5 +519,5 @@ end
 
 resize!(neighbour, nInternalFaces)
 
-calc_merge_info(blocks)
+calc_merge_info(blocks, vertices, faces, cellsAsFaces, owner, neighbour)
 end
