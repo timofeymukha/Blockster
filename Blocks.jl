@@ -1,12 +1,17 @@
 module Blocks
 
+include("MeshPrimitives.jl")
+include("Edges.jl")
+
 using FixedSizeArrays: Vec
-using Edges
-using MeshPrimitives
+
+using .Edges
+using .MeshPrimitives
+
 import Base.convert
 
 export Block, make_block_edges!, setedge!, create_points!, create_cells!,
-       point_index, npoints, ncells 
+       point_index, npoints, ncells
 
 " Type that defines a single block of the multi-block mesh."
 type Block
@@ -102,8 +107,8 @@ function point_index(block::Block, i::Int64, j::Int64, k::Int64)
            k > block.nCells[3] + 1
         error("point_index(): index out of bounds")
     end
-        
-    return i + (j-1)*(block.nCells[1] + 1) + 
+
+    return i + (j-1)*(block.nCells[1] + 1) +
                (k-1)*(block.nCells[1] + 1)*(block.nCells[2] + 1)
 end
 
@@ -131,7 +136,7 @@ function create_points!(block::Block)
     edgeW = block.edgeWeights
 
     block.points = resize!(block.points, npoints(block))
-    
+
     for k in 1:block.nCells[3]+1
         for j in 1:block.nCells[2]+1
             for i in 1:block.nCells[1]+1
@@ -151,7 +156,7 @@ function create_points!(block::Block)
                 edgeZ2 = v100 + (v101 - v100)*edgeW[10][k];
                 edgeZ3 = v110 + (v111 - v110)*edgeW[11][k];
                 edgeZ4 = v010 + (v011 - v010)*edgeW[12][k];
-                
+
                 # Calculate the importance factors for all edges
 
                 # x-direction
@@ -308,8 +313,8 @@ function create_cells!(block::Block)
                                            point_index(block, i+1, j+1, k+1),
                                            point_index(block, i, j+1, k+1)
                                            ])
-            
-                cellNo += 1  
+
+                cellNo += 1
             end
         end
     end

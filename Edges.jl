@@ -1,6 +1,8 @@
 module Edges
 
-using MeshPrimitives
+include("MeshPrimitives.jl")
+
+using .MeshPrimitives
 
 include("edges/curvededge.jl")
 include("edges/lineedge.jl")

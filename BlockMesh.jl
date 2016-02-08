@@ -1,12 +1,18 @@
 module blockMesh
 
+include("MeshPrimitives.jl")
+include("Edges.jl")
+include("Blocks.jl")
+
 using JSON
-using MeshPrimitives
-using Edges
-using Blocks
+using .MeshPrimitives
+using .Edges
+using .Blocks
+
+dictPath = "C:\\Users\\Timofey Mukha\\Blockster\\dict.json"
 
 # Parse the dictionary
-dict = JSON.parsefile("dict.json")
+dict = JSON.parsefile(dictPath)
 
 # Get the number of blocks
 nBlocks = size(dict["blocks"], 1)
@@ -19,7 +25,7 @@ for i in 1:nVertices
 end
 
 
-function read_boundary!(meshDict, 
+function read_boundary!(meshDict,
                         patchNames::Array{ASCIIString, 1},
                         patchBlockFaces::Vector{Vector{Face}})
 
@@ -46,7 +52,7 @@ function check_patch_vertex_labels(patchNames,
                        in patch """, patchNames[patchI])
             elseif !isempty(find(Array(patchBlockFaces[patchI][faceI]) .>
                                  size(vertices, 1)))
-                error("""check_patch_vertex_labels() : face vertex label 
+                error("""check_patch_vertex_labels() : face vertex label
                 out of bounds in patch """, patchNames[patchI])
             end
         end
@@ -64,7 +70,7 @@ type Mesh
     "The json file to read the mesh properties from"
     dict
 
-    "The blocks defining the mesh" 
+    "The blocks defining the mesh"
     blocks::Vector{Block}
 
     "The points of the mesh"
@@ -92,7 +98,7 @@ function point_cell_addressing(cells::Vector{Cell}, nPoints::Int64)
 
         # For each point in the cell
         for pointI in 1:size(cells[cellI], 1)
-            
+
             currPoint = cells[cellI][pointI]
             # Add current cell to the addressing list
             push!(pointCellAddressing[currPoint], cellI)
@@ -204,10 +210,10 @@ function create_topology(cells::Vector{Cell},
         faceOfNeiCell = fill(-1, size(cellIFaces))
 
         nNeighbours = 0
-        
+
         # Identify the neighbours for each face of the cell
         for faceI in 1:size(cellIFaces, 1)
-           
+
             # Skip faces that have already been matched
             if cellsAsFaces[cellI][faceI] > -1
                 continue
@@ -233,7 +239,7 @@ function create_topology(cells::Vector{Cell},
                         neiFaces = cellFaces[currNei]
 
                         for neiFaceI in 1:size(neiFaces, 1)
-                            
+
                             if samepoints(neiFaces[neiFaceI], currFace)
                             #if neiFaces[neiFaceI] == currFace
                                 #Match!
@@ -265,7 +271,7 @@ function create_topology(cells::Vector{Cell},
 
         # Add the faces in the increasing order of neighbours
         for neiSearch in 1:nNeighbours
-           
+
             # Find the lowest neighbour which is still valid
             nextNei = -1
             minNei = size(cellsAsFaces, 1)
@@ -283,7 +289,7 @@ function create_topology(cells::Vector{Cell},
 
                 # Set cell-face and cell-neighbour-face to current face label
                 cellsAsFaces[cellI][nextNei] = nFaces
-                cellsAsFaces[neiCells[nextNei]][faceOfNeiCell[nextNei]] = 
+                cellsAsFaces[neiCells[nextNei]][faceOfNeiCell[nextNei]] =
                                                                         nFaces
 
                 # Stop the neighbour from being used again
@@ -315,7 +321,7 @@ function create_topology(cells::Vector{Cell},
 
 
         for faceI in 1:size(patchFaces, 1)
-            
+
             currFace = patchFaces[faceI]
 
 
@@ -330,10 +336,10 @@ function create_topology(cells::Vector{Cell},
                     if cellsAsFaces[cellInside][cellFaceI] >= 0
                         error("""set_topology(): Trying to specify a boundary face
                               $currFace
-                              on the face of cell $cellInside, which is either 
+                              on the face of cell $cellInside, which is either
                               an internal face or already belongs to some other
                               patch.
-                              
+
                               This is face $faceI of patch $patchI named
                               $patchName.""")
                     end
@@ -400,7 +406,7 @@ function calc_merge_info(blocks::Vector{Block},
 
     nBlocs = size(blocks, 1)
     blockOffsets = Vector{Int64}(nBlocks)
-    
+
     nPoints = 0
     nCells = 0
 
@@ -412,7 +418,7 @@ function calc_merge_info(blocks::Vector{Block},
 
     mergeList = fill(-1, nPoints)
 
-    glueMergePairs = Vector{Vector{Vector{Int64}}}(size(blockFaces, 1)) 
+    glueMergePairs = Vector{Vector{Vector{Int64}}}(size(blockFaces, 1))
 
     for blockFaceI in 1:size(blockFaces, 1)
 
@@ -437,7 +443,7 @@ function calc_merge_info(blocks::Vector{Block},
                    for block $blockPLabel")
          end
     end
-    
+
 
 end
 
@@ -450,7 +456,7 @@ for blockI in 1:nBlocks
     for j in 1:8
         blocks[blockI].vertices[j] = vertices[blocks[blockI].vertexLabels[j]]
     end
-    
+
     # Create the edge points
     println("        Creating edge-points")
     make_block_edges!(blocks[blockI])
@@ -496,7 +502,7 @@ markedFaces = fill(false, size(faces, 1))
 nInternalFaces = 0
 
 for cellI in 1:size(cellsAsFaces, 1)
-    
+
     cellFaces = cellsAsFaces[cellI]
 
     for faceI in 1:size(cellFaces, 1)
