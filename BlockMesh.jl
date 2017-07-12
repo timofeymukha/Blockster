@@ -9,7 +9,7 @@ using .MeshPrimitives
 using .Edges
 using .Blocks
 
-dictPath = "C:\\Users\\Timofey Mukha\\Blockster\\dict.json"
+dictPath = "C:\\Users\\Timofey Mukha\\Documents\\Blockster\\dict.json"
 
 # Parse the dictionary
 dict = JSON.parsefile(dictPath)
@@ -26,7 +26,7 @@ end
 
 
 function read_boundary!(meshDict,
-                        patchNames::Array{ASCIIString, 1},
+                        patchNames::Array{String, 1},
                         patchBlockFaces::Vector{Vector{Face}})
 
     nPatches = size(meshDict["boundary"], 1)
@@ -59,7 +59,7 @@ function check_patch_vertex_labels(patchNames,
     end
 end
 
-patchNames = ASCIIString[]
+patchNames = String[]
 patchBlockFaces = Vector{Vector{Face}}(0)
 
 read_boundary!(dict, patchNames, patchBlockFaces)
@@ -167,7 +167,7 @@ end
 
 function create_topology(cells::Vector{Cell},
                          boundaryFaces::Vector{Vector{Face}},
-                         boundaryPatchNames::Vector{ASCIIString},
+                         boundaryPatchNames::Vector{String},
                          nPoints)
 
     # Define a vector of cells defined as face vectors

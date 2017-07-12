@@ -1,24 +1,24 @@
 module MeshPrimitives
 
-using FixedSizeArrays: Vec
+using StaticArrays: SVector
 
 export Point, Face, Cell, cellfaces, samepoints
 
 
 " Type for a Point in 3d space. An alias for a vector of Float64 of size 3"
-typealias Point Vec{3, Float64}
+const Point = SVector{3, Float64}
 
 """
 Type for a quad-face. Holds a list of Point-labels. An alias for a vector of 
 Int64 of size 4.
 """
-typealias Face Vec{4, Int64 }
+const Face = SVector{4, Int64 }
 
 """
 Type for a hex-cell. Holds a list of Point-labels. An alias for a vector of 
 Int64 of size 8.
 """
-typealias Cell Vec{8, Int64 }
+const Cell = SVector{8, Int64 }
 
 """
 Return the faces of a cell.

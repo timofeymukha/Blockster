@@ -3,7 +3,7 @@ module Blocks
 include("MeshPrimitives.jl")
 include("Edges.jl")
 
-using FixedSizeArrays: Vec
+using StaticArrays: SVector
 
 using .Edges
 using .MeshPrimitives
@@ -22,7 +22,7 @@ type Block
     edgePoints::Vector{Vector{Point}}
     edgeWeights::Vector{Vector{Float64}}
     curvedEdges::Vector{CurvedEdge}
-    nCells::Vec{3, Int64}
+    nCells::SVector{3, Int64}
 end
 
 Block() = Block(zeros(8),

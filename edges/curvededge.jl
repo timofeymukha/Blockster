@@ -1,4 +1,5 @@
-abstract CurvedEdge
+abstract  type CurvedEdge
+end
 
 function compare(edge::CurvedEdge,
                  startVertex::Int64,
