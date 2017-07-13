@@ -11,6 +11,7 @@ using .MeshPrimitives
 import Base.convert
 
 export Block, make_block_edges!, setedge!, create_points!, create_cells!,
+       create_boundary_faces!,
        point_index, npoints, ncells
 
 " Type that defines a single block of the multi-block mesh."
@@ -19,6 +20,7 @@ type Block
     vertices::Vector{Point}
     points::Vector{Point}
     cells::Vector{Cell}
+    boundaryFaces::Vector{Vector{Face}}
     edgePoints::Vector{Vector{Point}}
     edgeWeights::Vector{Vector{Float64}}
     curvedEdges::Vector{CurvedEdge}
@@ -29,6 +31,7 @@ Block() = Block(zeros(8),
                 Vector{Point}(8),
                 Vector{Point}(0),
                 Vector{Cell}(0),
+                Vector{Vector{Face}}(6),
                 Vector{Vector{Point}}(12),
                 Vector{Vector{Float64}}(12),
                 Vector{CurvedEdge}(0),
@@ -38,6 +41,144 @@ function convert(::Type{Cell}, block::Block)
     return convert(Cell, block.vertexLabels)
 end
 
+function create_boundary_faces!(block::Block)
+        nX =  block.nCells[1]
+        nY =  block.nCells[2]
+        nZ =  block.nCells[3]
+
+        wallLabel = 1
+        wallFaceLabel = 1
+
+        # x-direction
+
+        # x-min
+        block.boundaryFaces[wallLabel] = Vector{Face}(nY*nZ)
+        for k in 1:nZ
+            for j in 1:nY
+                p1 = point_index(block, 1, j, k) 
+                    
+                p2 = point_index(block, 1, j, k + 1)
+                    
+                p3 = point_index(block, 1, j + 1, k + 1)
+                    
+                p4 = point_index(block, 1, j + 1, k)
+                block.boundaryFaces[wallLabel][wallFaceLabel] = 
+                    [p1, p2, p3, p4]        
+
+                wallFaceLabel += 1    
+            end
+        end
+
+        wallLabel += 1
+        wallFaceLabel = 1
+
+        # x-max
+        block.boundaryFaces[wallLabel] = Vector{Face}(nY*nZ)
+        for k in 1:nZ
+            for j in 1:nY
+                p1 = point_index(block, nX + 1, j, k) 
+                    
+                p2 = point_index(block, nX + 1, j, k + 1)
+                    
+                p3 = point_index(block, nX + 1, j + 1, k + 1)
+                    
+                p4 = point_index(block, nX + 1, j + 1, k)
+                block.boundaryFaces[wallLabel][wallFaceLabel] = 
+                    [p1, p2, p3, p4]        
+
+                wallFaceLabel += 1    
+            end
+        end
+
+        # y-direction
+
+        # y-min
+        wallLabel += 1
+        wallFaceLabel = 1
+
+        block.boundaryFaces[wallLabel] = Vector{Face}(nX*nZ)
+        for i in 1:nX
+            for k in 1:nZ
+                p1 = point_index(block, i, 1, k) 
+                    
+                p2 = point_index(block, i + 1, 1, k)
+                    
+                p3 = point_index(block, i + 1, 1, k + 1)
+                    
+                p4 = point_index(block, i, 1, k + 1)
+                block.boundaryFaces[wallLabel][wallFaceLabel] = 
+                    [p1, p2, p3, p4]        
+
+                wallFaceLabel += 1    
+            end
+        end
+
+        wallLabel += 1
+        wallFaceLabel = 1
+
+        # y-max
+        block.boundaryFaces[wallLabel] = Vector{Face}(nX*nZ)
+        for i in 1:nX
+            for k in 1:nZ
+                p1 = point_index(block, i, nY + 1, k) 
+                    
+                p2 = point_index(block, i + 1, nY + 1, k)
+                    
+                p3 = point_index(block, i + 1, nY + 1, k + 1)
+                    
+                p4 = point_index(block, i, nY + 1, k + 1)
+                block.boundaryFaces[wallLabel][wallFaceLabel] = 
+                    [p1, p2, p3, p4]        
+
+                wallFaceLabel += 1    
+            end
+        end
+
+        # z-direction
+
+        # z-min
+        wallLabel += 1
+        wallFaceLabel = 1
+
+        block.boundaryFaces[wallLabel] = Vector{Face}(nX*nY)
+        for i in 1:nX
+            for j in 1:nY
+                p1 = point_index(block, i, j, 1) 
+                    
+                p2 = point_index(block, i, j + 1, 1)
+                    
+                p3 = point_index(block, i + 1, j + 1, 1)
+                    
+                p4 = point_index(block, i + 1, j, 1)
+                block.boundaryFaces[wallLabel][wallFaceLabel] = 
+                    [p1, p2, p3, p4]        
+
+                wallFaceLabel += 1    
+            end
+        end
+
+        # z-max
+        wallLabel += 1
+        wallFaceLabel = 1
+
+        block.boundaryFaces[wallLabel] = Vector{Face}(nX*nY)
+        for i in 1:nX
+            for j in 1:nY
+                p1 = point_index(block, i, j, nZ + 1) 
+                    
+                p2 = point_index(block, i, j + 1, nZ + 1)
+                    
+                p3 = point_index(block, i + 1, j + 1, nZ + 1)
+                    
+                p4 = point_index(block, i + 1, j, nZ + 1)
+                block.boundaryFaces[wallLabel][wallFaceLabel] = 
+                    [p1, p2, p3, p4]        
+
+                wallFaceLabel += 1    
+            end
+        end
+
+end
 
 function make_block_edges!(block::Block)
     nX = block.nCells[1];
@@ -313,7 +454,6 @@ function create_cells!(block::Block)
                                            point_index(block, i+1, j+1, k+1),
                                            point_index(block, i, j+1, k+1)
                                            ])
-
                 cellNo += 1
             end
         end
