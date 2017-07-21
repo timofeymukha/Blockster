@@ -41,6 +41,7 @@ function convert(::Type{Cell}, block::Block)
     return convert(Cell, block.vertexLabels)
 end
 
+
 function create_boundary_faces!(block::Block)
         nX =  block.nCells[1]
         nY =  block.nCells[2]
@@ -188,16 +189,16 @@ function make_block_edges!(block::Block)
     # These edges correspond to the "hex" cellModel
 
     # X-direction
-    setedge!(block, 1,  1, 2, nX);
-    setedge!(block, 2,  4, 3, nX);
-    setedge!(block, 3,  8, 7, nX);
-    setedge!(block, 4,  5, 6, nX);
+    setedge!(block, 1, 1, 2, nX);
+    setedge!(block, 2, 4, 3, nX);
+    setedge!(block, 3, 8, 7, nX);
+    setedge!(block, 4, 5, 6, nX);
 
     # Y-direction
-    setedge!(block, 5,  1, 4, nY);
-    setedge!(block, 6,  2, 3, nY);
-    setedge!(block, 7,  6, 7, nY);
-    setedge!(block, 8,  5, 8, nY);
+    setedge!(block, 5, 1, 4, nY);
+    setedge!(block, 6, 2, 3, nY);
+    setedge!(block, 7, 6, 7, nY);
+    setedge!(block, 8, 5, 8, nY);
 
     # Z-direction
     setedge!(block, 9,  1, 5, nZ);

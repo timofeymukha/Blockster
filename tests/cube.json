@@ -9,23 +9,13 @@
         [0, 0, 4],
         [4, 0, 4],
         [4, 1, 4],
-        [0, 1, 4],
-        [0, 2, 0],
-        [4, 2, 0],
-        [0, 2, 4],
-        [4, 2, 4]
+        [0, 1, 4]
     ],
     "blocks":
     [
         {
             "vertices": [0, 1, 2, 3, 4, 5, 6, 7],
-            "number of cells": [1, 1, 1],
-            "grading type": "simpleGrading",
-            "grading ratios": [1, 1, 1]
-        },
-        {
-            "vertices": [3, 2, 9, 8, 7, 6, 11, 10],
-            "number of cells": [1, 1, 1],
+            "number of cells": [2, 2, 2],
             "grading type": "simpleGrading",
             "grading ratios": [1, 1, 1]
         }
@@ -60,7 +50,7 @@
         {
             "name": "top",
             "type": "wall",
-            "faces": [[9, 8, 10, 11]]
+            "faces": [[6, 2, 3, 7]]
         }
     ]   
 }

@@ -36,12 +36,12 @@ Return the faces of a cell.
 function cellfaces(c::Cell)
     faces = Vector{Face}(6)
 
-    faces[1] = Face([c[1], c[2], c[3], c[4]])
-    faces[2] = Face([c[5], c[6], c[7], c[8]])
-    faces[3] = Face([c[7], c[3], c[4], c[8]])
-    faces[4] = Face([c[6], c[5], c[1], c[2]])
-    faces[5] = Face([c[4], c[1], c[5], c[8]])
-    faces[6] = Face([c[3], c[7], c[6], c[2]])
+    faces[1] = Face([c[4], c[1], c[5], c[8]])
+    faces[2] = Face([c[3], c[7], c[6], c[2]])
+    faces[3] = Face([c[6], c[5], c[1], c[2]])
+    faces[4] = Face([c[7], c[3], c[4], c[8]])
+    faces[5] = Face([c[1], c[2], c[3], c[4]])
+    faces[6] = Face([c[5], c[6], c[7], c[8]])
 
     return faces
 end
