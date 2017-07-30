@@ -1012,7 +1012,7 @@ function create_blocks(dict, vertices)
 end
 
 function main()
-    dictPath = "C:\\Users\\Timofey Mukha\\Documents\\Blockster\\channel.json"
+    dictPath = joinpath("tests", "dict.json")
 
     # Parse the dictionary
     dict = JSON.parsefile(dictPath)
@@ -1091,7 +1091,7 @@ function main()
 
 
     if !isdir(joinpath(".", "test_case", "constant", "polyMesh"))
-       mkdir(joinpath(".", "test_case", "constant", "polyMesh"))
+       mkpath(joinpath(".", "test_case", "constant", "polyMesh"))
     end
 
     ownerFile = open(joinpath(".", "test_case", "constant", "polyMesh", "owner"), "w")

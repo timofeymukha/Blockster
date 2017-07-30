@@ -19,13 +19,13 @@
     [
         {
             "vertices": [0, 1, 2, 3, 4, 5, 6, 7],
-            "number of cells": [100, 100, 100],
+            "number of cells": [10, 10, 10],
             "grading type": "simpleGrading",
             "grading ratios": [1, 1, 1]
         },
         {
             "vertices": [3, 2, 9, 8, 7, 6, 11, 10],
-            "number of cells": [100, 100, 100],
+            "number of cells": [10, 10, 10],
             "grading type": "simpleGrading",
             "grading ratios": [1, 1, 1]
         }
