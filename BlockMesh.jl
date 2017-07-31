@@ -397,8 +397,7 @@ function calc_merge_info(blocks::Vector{Block},
                          faceOwnerBlocks::Vector{Int64},
                          faceNeighbourBlocks::Vector{Int64},
                          nInternalFaces::Int64)
-
-    println("Creating block offsets")
+    @inbounds begin
 
     nBlocks = size(blocks, 1)
     blockOffsets = Vector{Int64}(nBlocks)
@@ -529,11 +528,6 @@ function calc_merge_info(blocks::Vector{Block},
             blockNfaceFaces =
                 blocks[blockNLabel].boundaryFaces[blockNfaceLabel]
 
-            #println(blockPfaceLabel)
-            #println(blockNfaceLabel)
-            #println(blockPfaceFaces)
-            #println(blockNfaceFaces)
-
             if size(blockPfaceFaces, 1) != size(blockNfaceFaces, 1)     
                 error("calc_merge_info(): inconsistent number of faces
                       between block par $blockPlabel $blockNlabel")
@@ -546,7 +540,7 @@ function calc_merge_info(blocks::Vector{Block},
 
                 resize!(glueMergePairs[sI][fI], 
                         size(blockPfaceFacePoints, 1))
-                #println("glueMergePairs $glueMergePairs")
+
                 glueMergePairs[sI][fI] = 
                     fill(-1, size(blockPfaceFacePoints, 1))
 
@@ -557,14 +551,17 @@ function calc_merge_info(blocks::Vector{Block},
                             blockNfaceFaces[fIN]
 
                         for pIN in 1:size(blockNfaceFacePoints, 1)         
-                                #println(blockPPoints[blockPfaceFacePoints[pI]])
-                                #println(blockNPoints[blockNfaceFacePoints[pIN]])
-                                #println("")
-                            if norm(
-                                blockPPoints[blockPfaceFacePoints[pI]] -
-                                blockNPoints[blockNfaceFacePoints[pIN]])^2 < sqrMergeTol
+
+                            p1 = blockPPoints[blockPfaceFacePoints[pI]] 
+                            p2 = blockNPoints[blockNfaceFacePoints[pIN]]
+
+                            diff = p1 - p2
+                            sqrNorm = diff[1]*diff[1] +
+                                      diff[2]*diff[2] +
+                                      diff[3]*diff[3]
+
+                            if sqrNorm < sqrMergeTol
                                 # Found a pair
-                                #println("Found pair")
 
                                 glueMergePairs[sI][fI][pI] =
                                     blockNfaceFacePoints[pIN]
@@ -769,9 +766,10 @@ function calc_merge_info(blocks::Vector{Block},
      end
 
      nPoints = newPointLabel - 1
-
+     
+     end # inbounds
      return nCells, nPoints, blockOffsets, mergeList
-
+     
 end
 
 function create_points(blocks, blockOffsets, mergeList, nPoints)
@@ -981,7 +979,7 @@ function create_blocks(dict, vertices)
     blocks = Vector{Block}(nBlocks)
 
     for blockI in 1:nBlocks
-        println("    Block number ", blockI)
+        #println("    Block number ", blockI)
         blocks[blockI] = Block()
         blocks[blockI].nCells = dict["blocks"][blockI]["number of cells"]
 
@@ -994,25 +992,51 @@ function create_blocks(dict, vertices)
             blocks[blockI].vertices[j] = vertices[blocks[blockI].vertexLabels[j]]
         end
 
-        println("        Creating edge-points")
+        #println("        Creating edge-points")
         make_block_edges!(blocks[blockI])
 
-        println("        Creating points")
+        #println("        Creating points")
         create_points!(blocks[blockI])
 
-        println("        Creating cells")
+        #println("        Creating cells")
         create_cells!(blocks[blockI])
 
-        println("        Creating boundary faces")
+        #println("        Creating boundary faces")
         create_boundary_faces!(blocks[blockI])
-        println("        Done")
+        #println("        Done")
     end
 
     return blocks
 end
 
+function write_mesh_information(
+    nPoints,
+    nCells,
+    nFaces,
+    nInternalFaces,
+    patchNames,
+    patchStarts,
+    patchSizes
+)
+    println("----------------")
+    println("Mesh Information")
+    println("----------------")
+    println("  nPoints $(nPoints)")
+    println("  nCells $(nCells)")
+    println("  nFaces $(nFaces)")
+    println("  nInternalFaces $(nInternalFaces)")
+
+    println("----------------")
+    println("Patches")
+    println("----------------")
+
+    for i in 1:length(patchSizes)
+        println("  patch $i (start: $(patchStarts[i]) size: $(patchSizes[i])) name: $(patchNames[i])")
+    end
+end
+
 function main()
-    dictPath = joinpath("tests", "dict.json")
+    dictPath = joinpath("tests", "cube.json")
 
     # Parse the dictionary
     dict = JSON.parsefile(dictPath)
@@ -1032,7 +1056,7 @@ function main()
     patchNames, patchSurfaces =  read_boundary!(dict)
     check_patch_vertex_labels(patchNames, patchSurfaces, vertices)
 
-    println("Creating blocks...")
+    println("Creating blocks")
     blocks = create_blocks(dict, vertices)
 
     # Create mesh from the blocks
@@ -1081,7 +1105,7 @@ function main()
     owner, neighbour, nInternalFaces = init_mesh(faces, cellsAsFaces)
 
 
-    println("Writing")
+    println("Writing mesh")
     # change to 0-based arrays
     owner -= 1
     neighbour -= 1 
@@ -1151,6 +1175,15 @@ function main()
     write(boundaryFile, ")\n")
     close(boundaryFile)
 
+    write_mesh_information(
+        nPoints,
+        nCells,
+        nFaces,
+        nInternalFaces, 
+        patchNames,
+        patchStarts,
+        patchSizes
+    )
 
 end
 end
