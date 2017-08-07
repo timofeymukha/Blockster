@@ -1,8 +1,9 @@
-module MeshPrimitives
+#__precompile__() 
+#module MeshPrimitives
 
 using StaticArrays: SVector
 
-export Point, Face, Cell, cellfaces, samepoints
+#export Point, Face, Cell, cellfaces, samepoints
 
 
 " Type for a Point in 3d space. An alias for a vector of Float64 of size 3"
@@ -89,4 +90,4 @@ function samepoints(faceA::Face, faceB::Face)
     return true
 end
 
-end
+#end

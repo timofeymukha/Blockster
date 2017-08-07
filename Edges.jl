@@ -1,8 +1,9 @@
-module Edges
+#__precompile__() 
+#module Edges
 
-include("MeshPrimitives.jl")
+#include("MeshPrimitives.jl")
 
-using .MeshPrimitives
+#using .MeshPrimitives
 
 include("edges/curvededge.jl")
 include("edges/lineedge.jl")
@@ -10,4 +11,4 @@ include("edges/lineedge.jl")
 export CurvedEdge, compare, line_divide,
        LineEdge, poistion, mag
 
-end
+#end

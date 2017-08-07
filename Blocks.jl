@@ -1,12 +1,13 @@
-module Blocks
+#__precompile__() 
+#module Blocks
 
-include("MeshPrimitives.jl")
-include("Edges.jl")
+#include("MeshPrimitives.jl")
+#include("Edges.jl")
 
 using StaticArrays: SVector
 
-using .Edges
-using .MeshPrimitives
+#using .Edges
+#using .MeshPrimitives
 
 import Base.convert
 
@@ -461,4 +462,4 @@ function create_cells!(block::Block)
     end
 end
 
-end
+#end
