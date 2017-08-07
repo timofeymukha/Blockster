@@ -4,7 +4,8 @@
     {
         "Lx": 2,
         "Ly": 3,
-        "Lz": "Lx*Ly"
+        "Lz": "Lx*Ly",
+        "Nx": 5
     },
     "vertices":
     [
@@ -21,9 +22,15 @@
     [
         {
             "vertices": [0, 1, 2, 3, 4, 5, 6, 7],
-            "number of cells": [2, 2, 2],
-            "grading type": "simpleGrading",
-            "grading ratios": [1, 1, 1]
+            "number of cells": ["Nx*2", 1, 1],
+            "grading type": "simple",
+            "grading ratios": 
+                [1,
+                    [
+                        [0.2, 0.3, 2],
+                        [0.8, 0.7, 1]
+                    ],
+                1]
         }
     ],
     "boundary":

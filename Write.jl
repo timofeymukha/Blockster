@@ -91,13 +91,13 @@ function write_mesh(
 
     nPatches = length(patchNames)
     write_header(boundaryFile, "polyBoundaryMesh", "constant/polyMesh", "boundary")
-    write(boundaryFile, "$(nPatches))\n") 
+    write(boundaryFile, "$(nPatches)\n") 
     write(boundaryFile, "(\n")
     for i in 1:nPatches
         write(boundaryFile, "    $(patchNames[i])\n")
         write(boundaryFile, "    {\n")
         write(boundaryFile, "    type      wall;\n")
-        write(boundaryFile, "    inGroups\n")
+#        write(boundaryFile, "    inGroups\n")
         write(boundaryFile, "    nFaces    $(patchSizes[i]);\n")
         write(boundaryFile, "    startFace $(patchStarts[i] - 1);\n")
         write(boundaryFile, "    }\n")

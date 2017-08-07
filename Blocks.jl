@@ -12,7 +12,7 @@ using StaticArrays: SVector
 import Base.convert
 
 export Block, make_block_edges!, setedge!, create_points!, create_cells!,
-       create_boundary_faces!,
+       create_boundary_faces!, create_blocks,
        point_index, npoints, ncells
 
 " Type that defines a single block of the multi-block mesh."
@@ -26,6 +26,7 @@ type Block
     edgeWeights::Vector{Vector{Float64}}
     curvedEdges::Vector{CurvedEdge}
     nCells::SVector{3, Int64}
+    gradingType::String
 end
 
 Block() = Block(zeros(8),
@@ -36,12 +37,12 @@ Block() = Block(zeros(8),
                 Vector{Vector{Point}}(12),
                 Vector{Vector{Float64}}(12),
                 Vector{CurvedEdge}(0),
-                zeros(3))
+                zeros(3),
+                String(""))
 
 function convert(::Type{Cell}, block::Block)
     return convert(Cell, block.vertexLabels)
 end
-
 
 function create_boundary_faces!(block::Block)
         nX =  block.nCells[1]
@@ -186,6 +187,8 @@ function make_block_edges!(block::Block)
     nX = block.nCells[1];
     nY = block.nCells[2];
     nZ = block.nCells[3];
+
+    gradingType = 
 
     # These edges correspond to the "hex" cellModel
 
@@ -460,6 +463,44 @@ function create_cells!(block::Block)
             end
         end
     end
+end
+
+function create_blocks(dict, vertices, varsAsStr)
+    nBlocks = size(dict["blocks"], 1)
+    blocks = Vector{Block}(nBlocks)
+
+    for blockI in 1:nBlocks
+        #println("    Block number ", blockI)
+        blocks[blockI] = Block()
+        blocks[blockI].nCells = parse_ncells(varsAsStr, dict["blocks"][blockI]["number of cells"])
+
+        # read vertex numbers defining the block
+        blocks[blockI].vertexLabels = dict["blocks"][blockI]["vertices"] + 1
+
+        # the coordinates of all vertices defining the block
+        # corresponding to the vertex numbers defining the block
+        for j in 1:8
+            blocks[blockI].vertices[j] = vertices[blocks[blockI].vertexLabels[j]]
+        end
+
+        #println("        Creating edge-points")
+        make_block_edges!(blocks[blockI])
+
+        #println("        Creating points")
+        create_points!(blocks[blockI])
+
+        #println("        Creating cells")
+        create_cells!(blocks[blockI])
+
+        #println("        Creating boundary faces")
+        create_boundary_faces!(blocks[blockI])
+        #println("        Done")
+
+        blocks[blockI].gradingType = dict["blocks"][blockI]["grading type"]
+    end
+
+
+    return blocks
 end
 
 #end

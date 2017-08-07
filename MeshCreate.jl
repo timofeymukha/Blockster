@@ -39,9 +39,11 @@ function point_cell_addressing(cells::Vector{Cell}, nPoints::Int64)
     return pointCellAddressing
 end
 
-function patch_face_cells(faces::Vector{Face},
-                          cellFaces::Vector{Vector{Face}},
-                          pointCellAddressing::Vector{Vector{Int64}})
+function patch_face_cells(
+    faces::Vector{Face},
+    cellFaces::Vector{Vector{Face}},
+    pointCellAddressing::Vector{Vector{Int64}}
+)
 
     faceCells = Vector{Int64}(size(faces,1))
 
@@ -91,11 +93,13 @@ function patch_face_cells(faces::Vector{Face},
     return faceCells
 end
 
-function create_topology(cells::Vector{Cell},
-                         boundaryFaces::Vector{Vector{Face}},
-                         boundaryPatchNames::Vector{String},
-                         pointCellAddressing::Vector{Vector{Int64}},
-                         nPoints)
+function create_topology(
+    cells::Vector{Cell},
+    boundaryFaces::Vector{Vector{Face}},
+    boundaryPatchNames::Vector{String},
+    pointCellAddressing::Vector{Vector{Int64}},
+    nPoints
+)
 
     # Define a vector of cells defined as face index vectors
     cellsAsFaces = Vector{Vector{Int64}}(size(cells, 1))
@@ -320,13 +324,15 @@ function create_topology(cells::Vector{Cell},
 
 end
 
-function calc_merge_info(blocks::Vector{Block},
-                         blockPoints::Vector{Point},
-                         blockFaces::Vector{Face},
-                         blockCellsAsFaces::Vector{Vector{Int64}},
-                         faceOwnerBlocks::Vector{Int64},
-                         faceNeighbourBlocks::Vector{Int64},
-                         nInternalFaces::Int64)
+function calc_merge_info(
+    blocks::Vector{Block},
+    blockPoints::Vector{Point},
+    blockFaces::Vector{Face},
+    blockCellsAsFaces::Vector{Vector{Int64}},
+    faceOwnerBlocks::Vector{Int64},
+    faceNeighbourBlocks::Vector{Int64},
+    nInternalFaces::Int64
+)
     @inbounds begin
 
     nBlocks = size(blocks, 1)
@@ -702,7 +708,12 @@ function calc_merge_info(blocks::Vector{Block},
      
 end
 
-function create_points(blocks, blockOffsets, mergeList, nPoints)
+function create_points(
+    blocks,
+    blockOffsets,
+    mergeList,
+    nPoints
+)
     println("Creating global point list")
     points = Vector{Point}(nPoints)
 
@@ -718,7 +729,12 @@ function create_points(blocks, blockOffsets, mergeList, nPoints)
     return points
 end
 
-function create_cells(blocks, blockOffsets, mergeList, nCells)
+function create_cells(
+    blocks,
+    blockOffsets,
+    mergeList,
+    nCells
+)
     println("Creating global cell list")
     cells = Vector{Cell}(nCells)
 
@@ -746,7 +762,15 @@ function create_cells(blocks, blockOffsets, mergeList, nCells)
     return cells
 end
 
-function create_patches(blocks, blockOffsets, mergeList, blockFaces, patchTopologyFaces, faces, owner)
+function create_patches(
+    blocks,
+    blockOffsets,
+    mergeList,
+    blockFaces,
+    patchTopologyFaces,
+    faces,
+    owner
+)
 
     println("Creating patches")
 
