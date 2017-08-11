@@ -46,7 +46,7 @@ function parse_ncells(varsAsStr::Vector{String}, nCells)
         eval(parse(varsAsStr[i]))
     end
 
-    intNCells = Vector{Int64}(n)
+    intNCells = Vector{Int32}(n)
     for dir in 1:n
         if typeof(nCells[dir]) == String
             intNCells[dir]  = eval(parse(nCells[dir]))
@@ -56,6 +56,46 @@ function parse_ncells(varsAsStr::Vector{String}, nCells)
     end
 
     return intNCells
+end
+
+function parse_grading(varsAsStr::Vector{String}, grading, gradingType)
+    n = 12
+
+    for i in 1:length(varsAsStr)
+        eval(parse(varsAsStr[i]))
+    end
+
+    # convert grading to full edge grading if necessary
+    edgeGrading = Vector{Any}(n)
+    
+    if gradingType == "simple"
+        [edgeGrading[i] =grading[1] for i in 1:4]
+        [edgeGrading[i] =grading[2] for i in 5:8]
+        [edgeGrading[i] =grading[3] for i in 9:12]
+    else
+        edgeGrading = grading
+    end
+
+    for i in 1:n
+        if !(typeof(edgeGrading[i]) <: AbstractArray)
+            edgeGrading[i] = Vector([Vector([1., 1., edgeGrading[i]])])
+        end
+    end
+
+    for edge in 1:n
+        for section in 1:length(edgeGrading[edge])
+            for i in 1:3
+                current = @view edgeGrading[edge][section][i]
+                if typeof(current[1]) == String
+                    current[1]  = Float64(eval(parse(current[1])))
+                else
+                    current[1]  = Float64(current[1])
+                end
+            end
+        end
+    end
+
+    return edgeGrading
 end
 
 function variables_as_strings(variables)

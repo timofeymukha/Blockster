@@ -72,7 +72,7 @@ function main(args)
          "--dictionary", "-d"        
              help = "Dictionary defining the mesh."
              required = false
-             default = joinpath("tests", "cube.json")
+             default = joinpath("tests", "channel.json")
     end
 
     parsedArgs = parse_args(s) # the result is a Dict{String,Any}
@@ -83,9 +83,12 @@ function main(args)
     dict = JSON.parsefile(dictPath, dicttype=DataStructures.OrderedDict)
     
     # Parse user difined variables
-    variables = dict["variables"]
-    variablesAsStrings = variables_as_strings(variables)
-    println(variablesAsStrings)
+    if haskey(dict, "variables")
+        variables = dict["variables"]
+        variablesAsStrings = variables_as_strings(variables)
+    else
+        variablesAsStrings = Vector{String}(0)
+    end
 
     # Get the number of blocks
     nBlocks = size(dict["blocks"], 1)

@@ -1,7 +1,3 @@
-#module MeshCreate
-
-#using .MeshPrimitives
-#using .Blocks
 
 export point_cell_addressing, patch_face_cells, create_points, create_cells,
 create_patches, create_topology, calc_merge_info, init_mesh
@@ -15,7 +11,7 @@ Creates a `Vector` of `Vector`s  of size nPoints, each corresponding to a point
 in the geometry. Each `Vector` contains the numbers of the cells that contain
 current point.
 """
-function point_cell_addressing(cells::Vector{Cell}, nPoints::Int64)
+function point_cell_addressing(cells::Vector{Cell}, nPoints)
 
     # Number of cells each point is included in
     pointCellAddressing = Vector{Vector{Int64}}(nPoints)
@@ -331,7 +327,7 @@ function calc_merge_info(
     blockCellsAsFaces::Vector{Vector{Int64}},
     faceOwnerBlocks::Vector{Int64},
     faceNeighbourBlocks::Vector{Int64},
-    nInternalFaces::Int64
+    nInternalFaces
 )
     @inbounds begin
 
@@ -411,11 +407,11 @@ function calc_merge_info(
                         if magSqrDist < mergeSqrDist
                             PpointLabel = 
                                 blockPfaceFacePoints[pI] +
-                                blockOffsets[blockPlabel];
+                                blockOffsets[blockPLabel];
 
                             PpointLabel2 =
                                 blockPfaceFacePoints[pI2] +
-                                blockOffsets_[blockPlabel];
+                                blockOffsets[blockPLabel];
                             
                             minPP2 = min(PpointLabel, PpointLabel2);
 
@@ -423,11 +419,11 @@ function calc_merge_info(
                                 minPP2 = min(minPP2, mergeList[PpointLabel]);
                             end
 
-                            if (mergeList_[PpointLabel2] != -1)
+                            if (mergeList[PpointLabel2] != -1)
                                 minPP2 = min(minPP2, mergeList[PpointLabel2]);
                             end 
                             
-                            mergeList_[PpointLabel2] = minPP2
+                            mergeList[PpointLabel2] = minPP2
                             mergeList[PpointLabel] = minPP2
                         else
                             sqrMergeTol = min(sqrMergeTol, magSqrDist)
@@ -862,7 +858,7 @@ function create_patches(
                         if nUnique == 4
                             patchFaces[faceLabel] = quadFace
                             faceLabel += 1
-                        elseif nUnuque == 3
+                        elseif nUnique == 3
                             warn("Boundary face does not have 4 unique points")    
                             patchFaces[faceLabel] = quadFace[1:3]
                             faceLabel += 1
@@ -916,5 +912,3 @@ function init_mesh(faces, cellsAsFaces)
 
     return owner, neighbour, nInternalFaces
 end
-
-#end

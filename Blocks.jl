@@ -27,6 +27,7 @@ type Block
     curvedEdges::Vector{CurvedEdge}
     nCells::SVector{3, Int64}
     gradingType::String
+    grading::Vector{Any}
 end
 
 Block() = Block(zeros(8),
@@ -38,7 +39,8 @@ Block() = Block(zeros(8),
                 Vector{Vector{Float64}}(12),
                 Vector{CurvedEdge}(0),
                 zeros(3),
-                String(""))
+                String(""),
+                Vector{Any}(0))
 
 function convert(::Type{Cell}, block::Block)
     return convert(Cell, block.vertexLabels)
@@ -188,8 +190,6 @@ function make_block_edges!(block::Block)
     nY = block.nCells[2];
     nZ = block.nCells[3];
 
-    gradingType = 
-
     # These edges correspond to the "hex" cellModel
 
     # X-direction
@@ -211,12 +211,19 @@ function make_block_edges!(block::Block)
     setedge!(block, 12, 4, 8, nZ);
 end
 
-function setedge!(block::Block, edgeI::Int64, startVertex::Int64,
-                 endVertex::Int64, nDivisions::Int64)
+function setedge!(
+    block::Block,
+    edgeI,
+    startVertex,
+    endVertex,
+    nDivisions
+)
     # Check that start and end vertices are different
     if startVertex == endVertex
         warn("setedge!() : start and end vertices are the same.")
     end
+
+    grading = block.grading[edgeI]
 
     # Loop through the curved edges and compare to given edge
     for i in 1:size(block.curvedEdges, 1)
@@ -241,10 +248,10 @@ function setedge!(block::Block, edgeI::Int64, startVertex::Int64,
     edge = LineEdge(block.vertices, startVertex, endVertex)
 
     (block.edgePoints[edgeI],
-     block.edgeWeights[edgeI]) = line_divide(edge, nDivisions)
+     block.edgeWeights[edgeI]) = line_divide(edge, nDivisions, grading)
 end
 
-function point_index(block::Block, i::Int64, j::Int64, k::Int64)
+function point_index(block::Block, i, j, k)
     # Check bounds
     if i < 1 || j < 1 || k < 1
         error("point_index(): index less then 1")
@@ -470,7 +477,6 @@ function create_blocks(dict, vertices, varsAsStr)
     blocks = Vector{Block}(nBlocks)
 
     for blockI in 1:nBlocks
-        #println("    Block number ", blockI)
         blocks[blockI] = Block()
         blocks[blockI].nCells = parse_ncells(varsAsStr, dict["blocks"][blockI]["number of cells"])
 
@@ -483,20 +489,28 @@ function create_blocks(dict, vertices, varsAsStr)
             blocks[blockI].vertices[j] = vertices[blocks[blockI].vertexLabels[j]]
         end
 
-        #println("        Creating edge-points")
+        blocks[blockI].gradingType = dict["blocks"][blockI]["grading type"]
+
+        if !(blocks[blockI].gradingType == "simple" ||
+             blocks[blockI].gradingType == "edge")
+            error("Incorrect grading type for block $(blockI).
+                   Should be either simple or edge")
+         end
+
+        blocks[blockI].grading = parse_grading(
+                                     varsAsStr,
+                                     dict["blocks"][blockI]["grading"],
+                                     blocks[blockI].gradingType
+                                 )
+
         make_block_edges!(blocks[blockI])
 
-        #println("        Creating points")
         create_points!(blocks[blockI])
 
-        #println("        Creating cells")
         create_cells!(blocks[blockI])
 
-        #println("        Creating boundary faces")
         create_boundary_faces!(blocks[blockI])
-        #println("        Done")
 
-        blocks[blockI].gradingType = dict["blocks"][blockI]["grading type"]
     end
 
 
