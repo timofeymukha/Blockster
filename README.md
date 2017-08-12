@@ -19,8 +19,6 @@ and see how Blockster will compare to blockMesh in terms of speed.
 
 * Support for non-hexahedral cells, non-quad faces.
 
-* Proper treatment of patch types.
-
 * Curvelinear edges.
 
 * Adding a default patch.

@@ -1,19 +1,19 @@
 export read_boundary, parse_vertices, parse_ncells, variables_as_strings
 
 function read_boundary(meshDict)
-
     nPatches = size(meshDict["boundary"], 1)
 
     patchNames = Vector{String}(nPatches)
+    patchTypes = Vector{String}(nPatches)
     patchSurfaces = Vector{Vector{Face}}(nPatches)
 
     for i in 1:nPatches
         patchNames[i] = meshDict["boundary"][i]["name"]
+        patchTypes[i] = meshDict["boundary"][i]["type"]
         patchSurfaces[i] = meshDict["boundary"][i]["faces"] + 1
     end
 
-    return patchNames, patchSurfaces
-
+    return patchNames, patchTypes, patchSurfaces
 end
 
 function parse_vertices(varsAsStr::Vector{String}, vertices)

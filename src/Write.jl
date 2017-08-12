@@ -35,6 +35,7 @@ function write_mesh_information(
     for i in 1:length(patchSizes)
         println("  patch $i (start: $(patchStarts[i]) size: $(patchSizes[i])) name: $(patchNames[i])")
     end
+
 end
 
 function write_mesh(
@@ -43,9 +44,9 @@ function write_mesh(
     neighbour,
     points,
     faces,
-    patchNames,
     patchStarts,
-    patchSizes
+    patchSizes,
+    patchDicts
 )
     ownerFile = open(joinpath(dir, "owner"), "w")
     neighbourFile = open(joinpath(dir, "neighbour"), "w")
@@ -89,18 +90,23 @@ function write_mesh(
     write(facesFile, ")\n")
    close(facesFile)
 
-    nPatches = length(patchNames)
+    nPatches = length(patchDicts)
     write_header(boundaryFile, "polyBoundaryMesh", "constant/polyMesh", "boundary")
     write(boundaryFile, "$(nPatches)\n") 
     write(boundaryFile, "(\n")
     for i in 1:nPatches
-        write(boundaryFile, "    $(patchNames[i])\n")
+        write(boundaryFile, "    $(patchDicts[i]["name"])\n")
         write(boundaryFile, "    {\n")
-        write(boundaryFile, "    type      wall;\n")
-#        write(boundaryFile, "    inGroups\n")
+        write(boundaryFile, "    type      $(patchDicts[i]["type"]);\n")
+        for (key, val) in patchDicts[i]
+            if !(key in ["name", "type", "faces"])
+                write(boundaryFile, "    $(key) $(val);\n")
+            end
+        end
         write(boundaryFile, "    nFaces    $(patchSizes[i]);\n")
-        write(boundaryFile, "    startFace $(patchStarts[i] - 1);\n")
+        write(boundaryFile, "    startFace $(patchStarts[i]);\n")
         write(boundaryFile, "    }\n")
+
     end
 
     write(boundaryFile, ")\n")

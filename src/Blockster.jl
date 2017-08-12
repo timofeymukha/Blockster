@@ -13,6 +13,11 @@ include("Blocks.jl")
 include("MeshCreate.jl")
 include("Write.jl")
 
+"""
+    bounding_box(points)
+
+    Compute the bounding box of a set of points.
+"""
 function bounding_box(points::Vector{Point})
     min = Vector(points[1])
     max = Vector(points[1])
@@ -49,6 +54,7 @@ end
 function check_patch_vertex_labels(patchNames,
                                    patchSurfaces,
                                    vertices)
+
     for patchI in 1:size(patchNames, 1)
         for faceI in size(patchSurfaces[patchI], 1)
             if !isempty(find(Array(patchSurfaces[patchI][faceI]) .< 1))
@@ -61,6 +67,7 @@ function check_patch_vertex_labels(patchNames,
             end
         end
     end
+
 end
 
 
@@ -95,20 +102,16 @@ function main(args)
     nVertices = size(dict["vertices"], 1)
 
     # Vertices defining the mesh as defined in the dict
-    #vertices = Vector{Point}(nVertices)
     vertices = dict["vertices"]
     vertices = parse_vertices(variablesAsStrings, vertices) 
 
-    patchNames = String[]
     # The faces of the patches defined from vertices in the dict
     patchSurfaces = Vector{Vector{Face}}(0)
 
-    patchNames, patchSurfaces = read_boundary(dict)
-    check_patch_vertex_labels(
-        patchNames,
-        patchSurfaces,
-        vertices
-    )
+    patchNames, patchTypes, patchSurfaces = read_boundary(dict)
+    patchDicts = dict["boundary"]
+
+    check_patch_vertex_labels(patchNames, patchSurfaces, vertices)
 
     println("Creating blocks")
     blocks = create_blocks(dict, vertices, variablesAsStrings)
@@ -197,6 +200,10 @@ function main(args)
         faces[i] = faces[i] - 1
     end
 
+    for i in 1:size(patchStarts, 1)
+        patchStarts[i] = patchStarts[i] - 1
+    end
+
     println("Writing mesh")
 
     if !isdir(joinpath(".", "test_case", "constant", "polyMesh"))
@@ -211,9 +218,9 @@ function main(args)
         neighbour,
         points,
         faces,
-        patchNames,
         patchStarts,
-        patchSizes
+        patchSizes,
+        patchDicts
     )
 
     write_mesh_information(

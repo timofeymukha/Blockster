@@ -23,11 +23,11 @@ boundaryField
 {
     inlet
     {
-        type            zeroGradient;
+        type           cyclic; 
     }
     outlet
     {
-        type            zeroGradient;
+        type           cyclic; 
     }
     bottom
     {
@@ -39,11 +39,11 @@ boundaryField
     }
     left
     {
-        type            zeroGradient;
+        type           cyclic; 
     }
     right
     {
-        type            zeroGradient;
+        type           cyclic; 
     }
 }
 
