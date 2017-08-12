@@ -21,7 +21,9 @@ and see how Blockster will compare to blockMesh in terms of speed.
 
 * Proper treatment of patch types.
 
-* Curvelinear cells.
+* Curvelinear edges.
+
+* Adding a default patch.
 
 ## Features unique to Blockster
 
