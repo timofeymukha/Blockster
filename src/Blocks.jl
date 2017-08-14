@@ -236,6 +236,11 @@ function setedge!(
 
         if cmp > 0
             # Divide the line
+
+            (block.edgePoints[edgeI],
+            block.edgeWeights[edgeI]) = line_divide(curvedEdge,
+                                                    nDivisions,
+                                                    grading)
         else
             # Divide the line
 
@@ -478,10 +483,10 @@ function create_blocks(dict, vertices, varsAsStr)
 
     for blockI in 1:nBlocks
         blocks[blockI] = Block()
-        blocks[blockI].nCells = parse_ncells(varsAsStr, dict["blocks"][blockI]["number of cells"])
+        blocks[blockI].nCells = parse_ncells(varsAsStr, dict["blocks"][blockI][2])
 
         # read vertex numbers defining the block
-        blocks[blockI].vertexLabels = dict["blocks"][blockI]["vertices"] + 1
+        blocks[blockI].vertexLabels = dict["blocks"][blockI][1] + 1
 
         # the coordinates of all vertices defining the block
         # corresponding to the vertex numbers defining the block
@@ -489,7 +494,7 @@ function create_blocks(dict, vertices, varsAsStr)
             blocks[blockI].vertices[j] = vertices[blocks[blockI].vertexLabels[j]]
         end
 
-        blocks[blockI].gradingType = dict["blocks"][blockI]["grading type"]
+        blocks[blockI].gradingType = dict["blocks"][blockI][3]
 
         if !(blocks[blockI].gradingType == "simple" ||
              blocks[blockI].gradingType == "edge")
@@ -499,7 +504,7 @@ function create_blocks(dict, vertices, varsAsStr)
 
         blocks[blockI].grading = parse_grading(
                                      varsAsStr,
-                                     dict["blocks"][blockI]["grading"],
+                                     dict["blocks"][blockI][4],
                                      blocks[blockI].gradingType
                                  )
 

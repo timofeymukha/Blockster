@@ -1,6 +1,8 @@
+using ParallelAccelerator
 
 export point_cell_addressing, patch_face_cells, create_points, create_cells,
 create_patches, create_topology, calc_merge_info, init_mesh
+
 
 """
     point_cell_addressing(cells::Vector{Cell}, nPoints::Int64))
@@ -88,6 +90,7 @@ function patch_face_cells(
 
     return faceCells
 end
+
 
 function create_topology(
     cells::Vector{Cell},
@@ -320,6 +323,7 @@ function create_topology(
 
 end
 
+
 function calc_merge_info(
     blocks::Vector{Block},
     blockPoints::Vector{Point},
@@ -523,7 +527,7 @@ function calc_merge_info(
                 for pI in size(blockPfaceFacePoints, 1)
                     if glueMergePairs[sI][fI][pI] == -1
                         error("Inconsitent point location between block pair
-                            $blockPLabel and $blockNLabel 
+                            $(blockPLabel) and $(blockNLabel)
                             (probably due to inconsistent grading)")
                             
                     end
