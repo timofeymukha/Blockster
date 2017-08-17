@@ -1,4 +1,5 @@
-export read_boundary, parse_vertices, parse_ncells, variables_as_strings
+export read_boundary, parse_vertices, parse_ncells, parse_grading,
+       variables_as_strings
 
 function read_boundary(meshDict)
     nPatches = size(meshDict["boundary"], 1)
