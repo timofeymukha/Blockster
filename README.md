@@ -23,6 +23,10 @@ and see how Blockster will compare to blockMesh in terms of speed.
 
 * Adding a default patch.
 
+* Support for naming vertices
+
+* Support for defining geometry and projecting mesh onto it.
+
 ## Features unique to Blockster
 
 * Ability to define variables and use them for defining vertex position,
