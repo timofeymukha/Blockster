@@ -1,4 +1,3 @@
-using ParallelAccelerator
 
 export point_cell_addressing, patch_face_cells, create_points, create_cells,
 create_patches, create_topology, calc_merge_info, init_mesh
