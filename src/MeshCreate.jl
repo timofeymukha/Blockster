@@ -4,7 +4,7 @@ create_patches, create_topology, calc_merge_info, init_mesh
 
 
 """
-    point_cell_addressing(cells::Vector{Cell}, nPoints::Int64))
+    point_cell_addressing(cells::Vector{Cell}, nPoints::Label))
 
 Compute point to cell addressing.
 
@@ -12,13 +12,17 @@ Creates a `Vector` of `Vector`s  of size nPoints, each corresponding to a point
 in the geometry. Each `Vector` contains the numbers of the cells that contain
 current point.
 """
-function point_cell_addressing(cells::Vector{Cell}, nPoints)
+function point_cell_addressing(
+    cells::Vector{Cell},
+    nPoints::Label
+) where {Label <: Integer}
+    @inbounds begin
 
     # Number of cells each point is included in
-    pointCellAddressing = Vector{Vector{Int64}}(nPoints)
+    pointCellAddressing = Vector{Vector{Label}}(nPoints)
 
     for i in 1:nPoints
-        pointCellAddressing[i] = Vector{Int64}(0)
+        pointCellAddressing[i] = Vector{Label}(0)
     end
 
     # For each cell
@@ -33,16 +37,19 @@ function point_cell_addressing(cells::Vector{Cell}, nPoints)
         end
     end
 
+    end #inbounds
     return pointCellAddressing
 end
 
 function patch_face_cells(
     faces::Vector{Face},
     cellFaces::Vector{Vector{Face}},
-    pointCellAddressing::Vector{Vector{Int64}}
-)
+    pointCellAddressing::Vector{Vector{Label}}
+) where {Label <: Integer}
 
-    faceCells = Vector{Int64}(size(faces,1))
+    @inbounds begin
+
+    faceCells = Vector{Label}(size(faces,1))
 
     # For each face determine the cell
     for faceI in 1:size(faces, 1)
@@ -87,6 +94,8 @@ function patch_face_cells(
         end
     end
 
+    end #inbounds
+
     return faceCells
 end
 
@@ -95,12 +104,13 @@ function create_topology(
     cells::Vector{Cell},
     boundaryFaces::Vector{Vector{Face}},
     boundaryPatchNames::Vector{String},
-    pointCellAddressing::Vector{Vector{Int64}},
-    nPoints
-)
+    pointCellAddressing::Vector{Vector{Label}},
+    nPoints::Label
+) where {Label<:Integer}
+    @inbounds begin
 
     # Define a vector of cells defined as face index vectors
-    cellsAsFaces = Vector{Vector{Int64}}(size(cells, 1))
+    cellsAsFaces = Vector{Vector{Label}}(size(cells, 1))
 
     # Get the faces of each cell and the maximum number of faces
     cellFaces = Vector{Vector{Face}}(size(cells, 1))
@@ -234,8 +244,8 @@ function create_topology(
 
     # Do the boundary faces
 
-    patchSizes = Vector{Int64}(size(boundaryFaces, 1))
-    patchStarts = Vector{Int64}(size(boundaryFaces, 1))
+    patchSizes = Vector{Label}(size(boundaryFaces, 1))
+    patchStarts = Vector{Label}(size(boundaryFaces, 1))
 
     for patchI in 1:size(boundaryFaces, 1)
 
@@ -317,6 +327,8 @@ function create_topology(
 
     resize!(faces, nFaces-1)
 
+    end #inbounds 
+
     return patchSizes, patchStarts, defaultPatchStart,
            faces, nFaces-1, cellsAsFaces
 
@@ -327,18 +339,18 @@ function calc_merge_info(
     blocks::Vector{Block},
     blockPoints::Vector{Point},
     blockFaces::Vector{Face},
-    blockCellsAsFaces::Vector{Vector{Int64}},
-    faceOwnerBlocks::Vector{Int64},
-    faceNeighbourBlocks::Vector{Int64},
+    blockCellsAsFaces::Vector{Vector{Label}},
+    faceOwnerBlocks::Vector{Label},
+    faceNeighbourBlocks::Vector{Label},
     nInternalFaces
-)
+) where {Label <: Integer}
     @inbounds begin
 
-    nBlocks = size(blocks, 1)
-    blockOffsets = Vector{Int64}(nBlocks)
+    nBlocks::Label = size(blocks, 1)
+    blockOffsets = Vector{Label}(nBlocks)
 
-    nPoints = 0
-    nCells = 0
+    nPoints::Label = 0
+    nCells::Label = 0
 
     for blockI in 1:nBlocks
         blockOffsets[blockI] = nPoints
@@ -346,11 +358,10 @@ function calc_merge_info(
         nCells += size(blocks[blockI].cells, 1)
     end
 
-    mergeList = fill(-1, nPoints)
+    mergeList = fill(Label(-1), nPoints)
 
-    glueMergePairs = Vector{Vector{Vector{Int64}}}(size(blockFaces, 1))
+    glueMergePairs = Vector{Vector{Vector{Label}}}(size(blockFaces, 1))
 
-    println("Creating merge list")
 
     # Go through all the faces in the topology
     for sI in 1:size(blockFaces, 1)
@@ -383,7 +394,7 @@ function calc_merge_info(
         # faces on the block boundary (face)
         blockPfaceFaces = blocks[blockPLabel].boundaryFaces[blockPfaceLabel]
 
-        glueMergePairs[sI] = [Vector{Int64}(1) 
+        glueMergePairs[sI] = [Vector{Label}(1) 
                               for _ in 1:size(blockPfaceFaces, 1)]
         
         bbMin, bbMax = bounding_box(blocks[blockPLabel].points)
@@ -713,7 +724,9 @@ function create_points(
     mergeList,
     nPoints
 )
-    println("Creating global point list")
+
+    @inbounds begin
+
     points = Vector{Point}(nPoints)
 
     for blockI in 1:size(blocks, 1)
@@ -725,24 +738,27 @@ function create_points(
         end
     end
 
+    end #indbounds
     return points
 end
 
 function create_cells(
-    blocks,
-    blockOffsets,
-    mergeList,
-    nCells
-)
-    println("Creating global cell list")
+    blocks::Vector{Block},
+    blockOffsets::Vector{Label},
+    mergeList::Vector{Label},
+    nCells::Label
+) where {Label <: Integer}
+
+    @inbounds begin
+
     cells = Vector{Cell}(nCells)
 
-    cellLabel = 1
+    cellLabel::Label = 1
 
     for blockI in 1:size(blocks, 1)
         blockCells = blocks[blockI].cells
 
-        cellPoints = Vector{Int64}(0)
+        cellPoints = Vector{Label}(0)
         for blockCellI in 1:size(blockCells,1 )
 
             resize!(cellPoints, size(blockCells[blockCellI], 1))
@@ -758,20 +774,21 @@ function create_cells(
         end
 
     end
+
+    end #inbounds
     return cells
 end
 
 function create_patches(
-    blocks,
-    blockOffsets,
-    mergeList,
-    blockFaces,
-    patchTopologyFaces,
-    faces,
-    owner
-)
-
-    println("Creating patches")
+    blocks::Vector{Block},
+    blockOffsets::Vector{Label},
+    mergeList::Vector{Label},
+    blockFaces::Vector{Vector{Face}},
+    patchTopologyFaces::Vector{Vector{Face}},
+    faces::Vector{Face},
+    owner::Vector{Label}
+) where {Label <: Integer}
+    @inbounds begin
 
     patches = [Vector{Face}(0) for _ in 1:size(patchTopologyFaces, 1)]
 
@@ -779,7 +796,7 @@ function create_patches(
     for patchI in 1:size(patches, 1)
         
         # find the owners of the surfaces definin gthe patch
-        blockLabels = Vector{Int64}(size(patchTopologyFaces[patchI], 1)) 
+        blockLabels = Vector{Label}(size(patchTopologyFaces[patchI], 1)) 
 
         for fI in 1:size(patchTopologyFaces[patchI], 1)
 
@@ -797,7 +814,7 @@ function create_patches(
             end
         end
 
-        nFaces = 0
+        nFaces::Label = 0
         
         # compute the number of faces on the patch
         for patchTopologyFaceLabel in 1:size(patchTopologyFaces[patchI], 1)
@@ -815,9 +832,9 @@ function create_patches(
         end
 
         patchFaces = Vector{Face}(nFaces)
-        faceLabel = 1
+        faceLabel::Label = 1
 
-        quadFace = Vector{Int64}(4)
+        quadFace = Vector{Label}(4)
 
         for patchTopologyFaceLabel in 1:size(patchTopologyFaces[patchI], 1)
 
@@ -836,7 +853,7 @@ function create_patches(
                               blockOffsets[blockI]
                         quadFace[1] = mergeList[idx]      
                               
-                        nUnique = 2
+                        nUnique::Label = 2
 
                         for facePointLabel in 2:4
 
@@ -878,16 +895,23 @@ function create_patches(
     end # for patchI
 
 
+    end #inbounds
     return patches
 end
 
-function init_mesh(faces, cellsAsFaces)
-    owner = fill(-1, size(faces, 1))
-    neighbour = fill(-1, size(faces, 1))
+function init_mesh(
+    faces::Vector{Face},
+    cellsAsFaces::Vector{Vector{Label}}
+) where {Label <: Integer}
+   
+    @inbounds begin
+
+    owner = fill(Label(-1), size(faces, 1))
+    neighbour = fill(Label(-1), size(faces, 1))
 
     markedFaces = fill(false, size(faces, 1))
 
-    nInternalFaces = 0
+    nInternalFaces::Label = 0
 
     for cellI in 1:size(cellsAsFaces, 1)
 
@@ -913,5 +937,6 @@ function init_mesh(faces, cellsAsFaces)
 
     resize!(neighbour, nInternalFaces)
 
+    end #inbounds
     return owner, neighbour, nInternalFaces
 end
