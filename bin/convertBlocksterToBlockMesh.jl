@@ -14,7 +14,7 @@ function main(args)
          "--dictionary", "-d"        
              help = "Dictionary defining the mesh."
              required = false
-             default = joinpath("tests", "channel.json")
+             default = joinpath("tests", "dict.json")
     end
 
     parsedArgs = parse_args(s) 
@@ -26,7 +26,7 @@ function main(args)
     # Parse user difined variables
     if haskey(dict, "variables")
         variables = dict["variables"]
-        variablesAsStrings = variables_as_strings(variables)
+        variablesAsStrings = Blockster.variables_as_strings(variables)
     else
         variablesAsStrings = Vector{String}(0)
     end
@@ -64,25 +64,29 @@ function main(args)
                       dict["blocks"][i][4],
                       gradingType
                   )
-        write(blockMeshDict, "hex (")
+        write(blockMeshDict, "  hex (")
         for j in 1:8
             write(blockMeshDict, "$(dict["blocks"][i][1][j]) ")
         end
         write(blockMeshDict, ") ($(nCells[1]) $(nCells[2]) $(nCells[3]))\n")
 
         if gradingType == "simple"
-            write(blockMeshDict, "simpleGrading\n(\n")
+            write(blockMeshDict, "  simpleGrading\n  (\n")
             for dir = (1, 5, 9)
-                write(blockMeshDict, "  (\n")
-                for secI = 1:length(grading[dir])
-                    grI = grading[dir][secI]
-                    write(blockMeshDict, "    ($(grI[1]) $(grI[2]) $(grI[3]))\n")
+                if length(grading[dir]) == 1
+                    write(blockMeshDict, "    $(grading[dir][1][3])\n")
+                else 
+                    write(blockMeshDict, "    (\n")
+                    for secI = 1:length(grading[dir])
+                        grI = grading[dir][secI]
+                        write(blockMeshDict, "      ($(grI[1]) $(grI[2]) $(grI[3]))\n")
 
+                    end
+                    write(blockMeshDict, "    )\n")
                 end
-                write(blockMeshDict, "  )\n")
 
             end
-            write(blockMeshDict, ")\n")
+            write(blockMeshDict, "  )\n")
         end
 
 

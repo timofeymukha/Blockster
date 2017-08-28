@@ -1,8 +1,7 @@
 
 using StaticArrays: SVector
-
-#export Point, Face, Cell, cellfaces, samepoints
-
+import Base.getindex
+import Base.convert
 
 " Type for a Point in 3d space. An alias for a vector of Float64 of size 3"
 const Point = SVector{3, Float64}
@@ -11,13 +10,31 @@ const Point = SVector{3, Float64}
 Type for a quad-face. Holds a list of Point-labels. An alias for a vector of 
 Int64 of size 4.
 """
-const Face = SVector{4, Int64 }
+const Face = SVector{4, Int32}
+#type Face{T<:Integer}
+#    data::SVector{4, T}
+#
+#    function Face{T}(arr::Vector{Int}) where {T<:Integer}
+#        new(SVector{4, T}(arr))
+#    end
+#end
+
+#function getindex(face::Face{T}, i::T) where {T<:Integer}
+#    return face.data[i]
+#end
+
+
+#function convert(::Face{T}, a::Vector{T}) where {T<:Integer}
+#    println("convert")
+#    return Face{T}(a)
+#end
+
 
 """
 Type for a hex-cell. Holds a list of Point-labels. An alias for a vector of 
 Int64 of size 8.
 """
-const Cell = SVector{8, Int64 }
+const Cell = SVector{8, Int32}
 
 """
 Return the faces of a cell.
@@ -33,6 +50,7 @@ Return the faces of a cell.
     A vector of faces.
 """
 function cellfaces(c::Cell)
+    @inbounds begin
     faces = Vector{Face}(6)
 
     faces[1] = Face([c[4], c[1], c[5], c[8]])
@@ -42,6 +60,7 @@ function cellfaces(c::Cell)
     faces[5] = Face([c[1], c[2], c[3], c[4]])
     faces[6] = Face([c[5], c[6], c[7], c[8]])
 
+    end
     return faces
 end
 

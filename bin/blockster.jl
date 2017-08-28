@@ -15,12 +15,22 @@ function main(args)
          "--dictionary", "-d"        
              help = "Dictionary defining the mesh."
              required = false
-             default = joinpath("tests", "channel.json")
+             default = joinpath("tests", "cube.json")
+         "--nowrite"
+             action = :store_true
+             help = "Do not write the mesh. For performance tests"
+         "--intsize"
+             help = "Number of bits used for integers"
+             required = false
+             default = 32
     end
 
     parsedArgs = parse_args(s) # the result is a Dict{String,Any}
 
     dictPath = parsedArgs["dictionary"]
+    nowrite = parsedArgs["nowrite"]
+
+    Label = eval(parse("Int$(parsedArgs["intsize"])"))
 
     # Parse the dictionary
     dict = JSON.parsefile(dictPath, dicttype=DataStructures.OrderedDict)
@@ -28,14 +38,14 @@ function main(args)
     # Parse user difined variables
     if haskey(dict, "variables")
         variables = dict["variables"]
-        variablesAsStrings = variables_as_strings(variables)
+        variablesAsStrings = Blockster.variables_as_strings(variables)
     else
         variablesAsStrings = Vector{String}(0)
     end
 
     # Get the number of blocks
-    nBlocks = size(dict["blocks"], 1)
-    nVertices = size(dict["vertices"], 1)
+    nBlocks::Label = length(dict["blocks"])
+    nVertices::Label = length(dict["vertices"])
 
     # Vertices defining the mesh as defined in the dict
     vertices = dict["vertices"]
@@ -46,8 +56,9 @@ function main(args)
 
     Blockster.check_patch_vertex_labels(patchNames, patchSurfaces, vertices)
 
-    println("Creating blocks")
+    print("Creating blocks...")
     blocks = Blockster.create_blocks(dict, vertices, variablesAsStrings)
+    print(" Done\n")
 
     # Create mesh from the blocks
     # blocks as cells
@@ -59,6 +70,7 @@ function main(args)
     # Create vertex to block adressing
     vertexBlockAddressing = Blockster.point_cell_addressing(blocksAsCells, nVertices)
 
+    print("Creating block topology...")
     patchSizes,
     patchStarts,
     defaultPatchStart,
@@ -71,6 +83,7 @@ function main(args)
                         vertexBlockAddressing,
                         nVertices
                    )
+    print(" Done\n")
 
     nDefaultFaces = nFaces - defaultPatchStart
 
@@ -81,6 +94,7 @@ function main(args)
     owner, neighbour, nInternalFaces = Blockster.init_mesh(faces, cellsAsFaces)
 
 
+    print("Creating merge list...")
     nCells, nPoints, blockOffsets, mergeList =
         Blockster.calc_merge_info(
             blocks,
@@ -91,21 +105,28 @@ function main(args)
             neighbour,
             nInternalFaces
         )
+    print(" Done\n")
 
+    print("Creating global point list...")
     points = Blockster.create_points(
                  blocks,
                  blockOffsets,
                  mergeList,
                  nPoints
              )
+    print(" Done\n")
+    nPoints::Label = length(points)
 
+    print("Creating global cell list...")
     cells = Blockster.create_cells(
                 blocks,
                 blockOffsets,
                 mergeList,
                 nCells
             )
+    print(" Done\n")
 
+    print("Creating patches...")
     patches = Blockster.create_patches(
                   blocks,
                   blockOffsets,
@@ -115,9 +136,11 @@ function main(args)
                   faces,
                   owner
               )
+    print(" Done\n")
 
     pointCellAddressing = Blockster.point_cell_addressing(cells, nPoints)
 
+    print("Creating mesh topology...")
     patchSizes,
     patchStarts,
     defaultPatchStart,
@@ -128,10 +151,13 @@ function main(args)
                        patches,
                        patchNames,
                        pointCellAddressing,
-                       size(points, 1)
+                       nPoints
                    )
+    print(" Done\n")
 
+    print("Creating ownder and neighbour lists...")
     owner, neighbour, nInternalFaces = Blockster.init_mesh(faces, cellsAsFaces)
+    print(" Done\n")
     
     # change to 0-based arrays
     owner -= 1
@@ -152,16 +178,18 @@ function main(args)
 
     writeDir = joinpath(".", "test_case", "constant", "polyMesh")
 
-    Blockster.write_mesh(
-        writeDir,
-        owner,
-        neighbour,
-        points,
-        faces,
-        patchStarts,
-        patchSizes,
-        patchDicts
-    )
+    if !nowrite
+        Blockster.write_mesh(
+            writeDir,
+            owner,
+            neighbour,
+            points,
+            faces,
+            patchStarts,
+            patchSizes,
+            patchDicts
+        )
+    end
 
     Blockster.write_mesh_information(
         nPoints,

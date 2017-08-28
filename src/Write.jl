@@ -33,7 +33,7 @@ function write_mesh_information(
     println("----------------")
 
     for i in 1:length(patchSizes)
-        println("  patch $i (start: $(patchStarts[i]) size: $(patchSizes[i])) name: $(patchNames[i])")
+        println("  patch $(i-1) (start: $(patchStarts[i]) size: $(patchSizes[i])) name: $(patchNames[i])")
     end
 
 end
