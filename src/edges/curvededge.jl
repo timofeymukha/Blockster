@@ -1,10 +1,11 @@
 abstract  type CurvedEdge
 end
 
-function compare(edge::CurvedEdge,
-                 startVertex::Int64,
-                 endVertex::Int64)
-
+function compare(
+    edge::CurvedEdge,
+    startVertex::Int64,
+    endVertex::Int64
+)
     if edge.startVertex == startVertex &&
        edge.endVertex == endVertex
         return 1
@@ -16,11 +17,14 @@ function compare(edge::CurvedEdge,
     end
 end
 
-function compare(edge1::CurvedEdge, edge2::CurvedEdge)
+function compare(
+    edge1::CurvedEdge,
+    edge2::CurvedEdge
+)
     return compare(edge1, edge2.startVertex, edge2.endVertex)
 end
 
-function line_divide(edge::CurvedEdge, nDivisions::Int64, grading)
+function line_divide(edge::CurvedEdge, nDivisions::Int, grading)
 
     points = Vector{Point}(nDivisions+1)
     divisions = Vector{Float64}(nDivisions+1)
@@ -29,11 +33,11 @@ function line_divide(edge::CurvedEdge, nDivisions::Int64, grading)
     divisions[end] = 1
 
     sectionStart::Float64 = divisions[1]
-    sectionStartInd::Int64 = 2
+    sectionStartInd::Int = 2
 
     if (nDivisions >= length(grading))
 
-        sectionDivs = Vector{Int64}(length(grading))
+        sectionDivs = Vector{Int}(length(grading))
         sumSectionDivs = 0
         sectionMaxDivs = 1
 
@@ -61,7 +65,7 @@ function line_divide(edge::CurvedEdge, nDivisions::Int64, grading)
             expRatio = grading[sectionI][3]
             
             sectionDiv = sectionDivs[sectionI]
-            sectionEndInd::Int64 = sectionStartInd + sectionDiv
+            sectionEndInd::Int = sectionStartInd + sectionDiv
 
             if expRatio == 1
                 for i = sectionStartInd:sectionEndInd-1
@@ -98,7 +102,7 @@ function line_divide(edge::CurvedEdge, nDivisions::Int64, grading)
     return (points, divisions)
 end
 
-function cell_to_cell_expansion_ratio(expRatio::Float64, nDivisions::Int64)
+function cell_to_cell_expansion_ratio(expRatio::Float64, nDivisions::Int)
     return nDivisions > 1 ? expRatio^(1.0/(nDivisions - 1)) : 0.0
 end
 

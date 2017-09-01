@@ -1,12 +1,12 @@
 export read_boundary, parse_vertices, parse_ncells, parse_grading,
        variables_as_strings
 
-function read_boundary(meshDict)
-    nPatches = size(meshDict["boundary"], 1)
+function read_boundary(meshDict, Label::Type)
+    nPatches = length(meshDict["boundary"])
 
     patchNames = Vector{String}(nPatches)
     patchTypes = Vector{String}(nPatches)
-    patchSurfaces = Vector{Vector{Face}}(nPatches)
+    patchSurfaces = Vector{Vector{Face{Label}}}(nPatches)
 
     for i in 1:nPatches
         patchNames[i] = meshDict["boundary"][i]["name"]
@@ -40,14 +40,17 @@ function parse_vertices(varsAsStr::Vector{String}, vertices)
     return floatVertices
 end
 
-function parse_ncells(varsAsStr::Vector{String}, nCells)
+function parse_ncells(
+    varsAsStr::Vector{String},
+    nCells::Vector{Any}
+)
     n = 3
 
     for i in 1:length(varsAsStr)
         eval(parse(varsAsStr[i]))
     end
 
-    intNCells = Vector{Int32}(n)
+    intNCells = Vector{Int}(n)
     for dir in 1:n
         if typeof(nCells[dir]) == String
             intNCells[dir]  = eval(parse(nCells[dir]))
@@ -59,7 +62,11 @@ function parse_ncells(varsAsStr::Vector{String}, nCells)
     return intNCells
 end
 
-function parse_grading(varsAsStr::Vector{String}, grading, gradingType)
+function parse_grading(
+    varsAsStr::Vector{String},
+    grading,
+    gradingType::String
+)
     n = 12
 
     for i in 1:length(varsAsStr)

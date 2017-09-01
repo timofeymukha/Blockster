@@ -25,16 +25,23 @@ function main(args)
              default = 32
     end
 
-    parsedArgs = parse_args(s) # the result is a Dict{String,Any}
+    parsedArgs::Dict{String, Any} = parse_args(s) # the result is a Dict{String,Any}
 
-    dictPath = parsedArgs["dictionary"]
-    nowrite = parsedArgs["nowrite"]
 
-    Label = eval(parse("Int$(parsedArgs["intsize"])"))
+    Label::DataType = eval(parse("Int$(parsedArgs["intsize"])"))
+
+    run(parsedArgs, Label)
+    
+
+end
+
+function run(parsedArgs, Label)
+    dictPath::String = parsedArgs["dictionary"]
+    nowrite::Bool = parsedArgs["nowrite"]
 
     # Parse the dictionary
-    dict = JSON.parsefile(dictPath, dicttype=DataStructures.OrderedDict)
-    
+    dict::DataStructures.OrderedDict = JSON.parsefile(dictPath,
+                                                      dicttype=DataStructures.OrderedDict)
     # Parse user difined variables
     if haskey(dict, "variables")
         variables = dict["variables"]
@@ -51,18 +58,18 @@ function main(args)
     vertices = dict["vertices"]
     vertices = Blockster.parse_vertices(variablesAsStrings, vertices) 
 
-    patchNames, patchTypes, patchSurfaces = Blockster.read_boundary(dict)
+    patchNames, patchTypes, patchSurfaces = Blockster.read_boundary(dict, Label)
     patchDicts = dict["boundary"]
 
     Blockster.check_patch_vertex_labels(patchNames, patchSurfaces, vertices)
 
     print("Creating blocks...")
-    blocks = Blockster.create_blocks(dict, vertices, variablesAsStrings)
+    blocks = Blockster.create_blocks(dict, vertices, variablesAsStrings, Label)
     print(" Done\n")
 
     # Create mesh from the blocks
     # blocks as cells
-    blocksAsCells = [convert(Blockster.Cell, blocks[i]) for i in 1:nBlocks]
+    blocksAsCells = [convert(Blockster.Cell{Label}, blocks[i]) for i in 1:nBlocks]
 
     # blocks as faces 
     blockFaces = [Blockster.cellfaces(blocksAsCells[i]) for i in 1:nBlocks]
@@ -141,6 +148,7 @@ function main(args)
     pointCellAddressing = Blockster.point_cell_addressing(cells, nPoints)
 
     print("Creating mesh topology...")
+
     patchSizes,
     patchStarts,
     defaultPatchStart,
@@ -200,7 +208,6 @@ function main(args)
         patchStarts,
         patchSizes
     )
-
 end
 
 main(ARGS)

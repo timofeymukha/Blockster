@@ -13,7 +13,7 @@ in the geometry. Each `Vector` contains the numbers of the cells that contain
 current point.
 """
 function point_cell_addressing(
-    cells::Vector{Cell},
+    cells::Vector{Cell{Label}},
     nPoints::Label
 ) where {Label <: Integer}
     @inbounds begin
@@ -42,8 +42,8 @@ function point_cell_addressing(
 end
 
 function patch_face_cells(
-    faces::Vector{Face},
-    cellFaces::Vector{Vector{Face}},
+    faces::Vector{Face{Label}},
+    cellFaces::Vector{Vector{Face{Label}}},
     pointCellAddressing::Vector{Vector{Label}}
 ) where {Label <: Integer}
 
@@ -101,8 +101,8 @@ end
 
 
 function create_topology(
-    cells::Vector{Cell},
-    boundaryFaces::Vector{Vector{Face}},
+    cells::Vector{Cell{Label}},
+    boundaryFaces::Vector{Vector{Face{Label}}},
     boundaryPatchNames::Vector{String},
     pointCellAddressing::Vector{Vector{Label}},
     nPoints::Label
@@ -113,7 +113,7 @@ function create_topology(
     cellsAsFaces = Vector{Vector{Label}}(size(cells, 1))
 
     # Get the faces of each cell and the maximum number of faces
-    cellFaces = Vector{Vector{Face}}(size(cells, 1))
+    cellFaces = Vector{Vector{Face{Label}}}(size(cells, 1))
     maxFaces = 0
 
     for i in 1:size(cellFaces,1)
@@ -126,7 +126,7 @@ function create_topology(
     end
 
     # Declare the array of faces
-    faces = Vector{Face}(maxFaces)
+    faces = Vector{Face{Label}}(maxFaces)
 
     nFaces = 1
 
@@ -336,13 +336,13 @@ end
 
 
 function calc_merge_info(
-    blocks::Vector{Block},
+    blocks::Vector{Block{Label}},
     blockPoints::Vector{Point},
-    blockFaces::Vector{Face},
+    blockFaces::Vector{Face{Label}},
     blockCellsAsFaces::Vector{Vector{Label}},
     faceOwnerBlocks::Vector{Label},
     faceNeighbourBlocks::Vector{Label},
-    nInternalFaces
+    nInternalFaces::Label
 ) where {Label <: Integer}
     @inbounds begin
 
@@ -743,7 +743,7 @@ function create_points(
 end
 
 function create_cells(
-    blocks::Vector{Block},
+    blocks::Vector{Block{Label}},
     blockOffsets::Vector{Label},
     mergeList::Vector{Label},
     nCells::Label
@@ -751,7 +751,7 @@ function create_cells(
 
     @inbounds begin
 
-    cells = Vector{Cell}(nCells)
+    cells = Vector{Cell{Label}}(nCells)
 
     cellLabel::Label = 1
 
@@ -780,17 +780,17 @@ function create_cells(
 end
 
 function create_patches(
-    blocks::Vector{Block},
+    blocks::Vector{Block{Label}},
     blockOffsets::Vector{Label},
     mergeList::Vector{Label},
-    blockFaces::Vector{Vector{Face}},
-    patchTopologyFaces::Vector{Vector{Face}},
-    faces::Vector{Face},
+    blockFaces::Vector{Vector{Face{Label}}},
+    patchTopologyFaces::Vector{Vector{Face{Label}}},
+    faces::Vector{Face{Label}},
     owner::Vector{Label}
 ) where {Label <: Integer}
     @inbounds begin
 
-    patches = [Vector{Face}(0) for _ in 1:size(patchTopologyFaces, 1)]
+    patches = [Vector{Face{Label}}(0) for _ in 1:size(patchTopologyFaces, 1)]
 
     # compute the faces of each patch 
     for patchI in 1:size(patches, 1)
@@ -900,7 +900,7 @@ function create_patches(
 end
 
 function init_mesh(
-    faces::Vector{Face},
+    faces::Vector{Face{Label}},
     cellsAsFaces::Vector{Vector{Label}}
 ) where {Label <: Integer}
    

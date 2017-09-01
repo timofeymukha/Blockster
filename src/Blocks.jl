@@ -1,13 +1,4 @@
-#__precompile__() 
-#module Blocks
-
-#include("MeshPrimitives.jl")
-#include("Edges.jl")
-
 using StaticArrays: SVector
-
-#using .Edges
-#using .MeshPrimitives
 
 import Base.convert
 
@@ -16,25 +7,26 @@ export Block, make_block_edges!, setedge!, create_points!, create_cells!,
        point_index, npoints, ncells
 
 " Type that defines a single block of the multi-block mesh."
-type Block
-    vertexLabels::Vector{Int64}
+type Block{Label <: Integer}
+    vertexLabels::Vector{Label}
     vertices::Vector{Point}
     points::Vector{Point}
-    cells::Vector{Cell}
-    boundaryFaces::Vector{Vector{Face}}
+    cells::Vector{Cell{Label}}
+    boundaryFaces::Vector{Vector{Face{Label}}}
     edgePoints::Vector{Vector{Point}}
     edgeWeights::Vector{Vector{Float64}}
     curvedEdges::Vector{CurvedEdge}
-    nCells::SVector{3, Int64}
+    nCells::SVector{3, Integer}
     gradingType::String
     grading::Vector{Any}
 end
 
-Block() = Block(zeros(8),
+Block{Label}() where {Label <: Integer} =
+     Block{Label}(zeros(8),
                 Vector{Point}(8),
                 Vector{Point}(0),
-                Vector{Cell}(0),
-                Vector{Vector{Face}}(6),
+                Vector{Cell{Label}}(0),
+                Vector{Vector{Face{Label}}}(6),
                 Vector{Vector{Point}}(12),
                 Vector{Vector{Float64}}(12),
                 Vector{CurvedEdge}(0),
@@ -42,22 +34,25 @@ Block() = Block(zeros(8),
                 String(""),
                 Vector{Any}(0))
 
-function convert(::Type{Cell}, block::Block)
+function convert(
+    ::Type{Cell{Label}},
+    block::Block
+) where {Label <: Integer}
     return convert(Cell, block.vertexLabels)
 end
 
-function create_boundary_faces!(block::Block)
+function create_boundary_faces!(block::Block{Label}) where {Label <: Integer}
         nX =  block.nCells[1]
         nY =  block.nCells[2]
         nZ =  block.nCells[3]
 
-        wallLabel = 1
-        wallFaceLabel = 1
+        wallLabel::Int = 1
+        wallFaceLabel::Int = 1
 
         # x-direction
 
         # x-min
-        block.boundaryFaces[wallLabel] = Vector{Face}(nY*nZ)
+        block.boundaryFaces[wallLabel] = Vector{Face{Label}}(nY*nZ)
         for k in 1:nZ
             for j in 1:nY
                 p1 = point_index(block, 1, j, k) 
@@ -78,7 +73,7 @@ function create_boundary_faces!(block::Block)
         wallFaceLabel = 1
 
         # x-max
-        block.boundaryFaces[wallLabel] = Vector{Face}(nY*nZ)
+        block.boundaryFaces[wallLabel] = Vector{Face{Label}}(nY*nZ)
         for k in 1:nZ
             for j in 1:nY
                 p1 = point_index(block, nX + 1, j, k) 
@@ -101,7 +96,7 @@ function create_boundary_faces!(block::Block)
         wallLabel += 1
         wallFaceLabel = 1
 
-        block.boundaryFaces[wallLabel] = Vector{Face}(nX*nZ)
+        block.boundaryFaces[wallLabel] = Vector{Face{Label}}(nX*nZ)
         for i in 1:nX
             for k in 1:nZ
                 p1 = point_index(block, i, 1, k) 
@@ -122,7 +117,7 @@ function create_boundary_faces!(block::Block)
         wallFaceLabel = 1
 
         # y-max
-        block.boundaryFaces[wallLabel] = Vector{Face}(nX*nZ)
+        block.boundaryFaces[wallLabel] = Vector{Face{Label}}(nX*nZ)
         for i in 1:nX
             for k in 1:nZ
                 p1 = point_index(block, i, nY + 1, k) 
@@ -145,7 +140,7 @@ function create_boundary_faces!(block::Block)
         wallLabel += 1
         wallFaceLabel = 1
 
-        block.boundaryFaces[wallLabel] = Vector{Face}(nX*nY)
+        block.boundaryFaces[wallLabel] = Vector{Face{Label}}(nX*nY)
         for i in 1:nX
             for j in 1:nY
                 p1 = point_index(block, i, j, 1) 
@@ -166,7 +161,7 @@ function create_boundary_faces!(block::Block)
         wallLabel += 1
         wallFaceLabel = 1
 
-        block.boundaryFaces[wallLabel] = Vector{Face}(nX*nY)
+        block.boundaryFaces[wallLabel] = Vector{Face{Label}}(nX*nY)
         for i in 1:nX
             for j in 1:nY
                 p1 = point_index(block, i, j, nZ + 1) 
@@ -477,12 +472,18 @@ function create_cells!(block::Block)
     end
 end
 
-function create_blocks(dict, vertices, varsAsStr)
+function create_blocks(
+    dict,
+    vertices,
+    varsAsStr,
+    Label::Type
+)
     nBlocks = size(dict["blocks"], 1)
-    blocks = Vector{Block}(nBlocks)
+    blocks = Vector{Block{Label}}(nBlocks)
 
+    
     for blockI in 1:nBlocks
-        blocks[blockI] = Block()
+        blocks[blockI] = Block{Label}()
         blocks[blockI].nCells = parse_ncells(varsAsStr, dict["blocks"][blockI][2])
 
         # read vertex numbers defining the block
