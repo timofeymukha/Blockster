@@ -4,9 +4,8 @@ using ArgParse
 import JSON
 import DataStructures
 
-#using Blockster
-include("../src/Blockster.jl")
-
+using Blockster
+#include("../src/Blockster.jl")
 
 function main(args)
     s = ArgParseSettings(description =
