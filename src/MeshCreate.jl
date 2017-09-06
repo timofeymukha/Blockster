@@ -15,7 +15,7 @@ current point.
 function point_cell_addressing(
     cells::Vector{Cell{Label}},
     nPoints::Label
-) where {Label <: Integer}
+) where {Label <: Union{Int32, Int64}}
     @inbounds begin
 
     # Number of cells each point is included in
@@ -45,7 +45,7 @@ function patch_face_cells(
     faces::Vector{Face{Label}},
     cellFaces::Vector{Vector{Face{Label}}},
     pointCellAddressing::Vector{Vector{Label}}
-) where {Label <: Integer}
+) where {Label <: Union{Int32, Int64}}
 
     @inbounds begin
 
@@ -106,7 +106,7 @@ function create_topology(
     boundaryPatchNames::Vector{String},
     pointCellAddressing::Vector{Vector{Label}},
     nPoints::Label
-) where {Label<:Integer}
+) where {Label<:Union{Int32, Int64}}
     @inbounds begin
 
     # Define a vector of cells defined as face index vectors
@@ -343,7 +343,7 @@ function calc_merge_info(
     faceOwnerBlocks::Vector{Label},
     faceNeighbourBlocks::Vector{Label},
     nInternalFaces::Label
-) where {Label <: Integer}
+) where {Label <: Union{Int32, Int64}}
     @inbounds begin
 
     nBlocks::Label = size(blocks, 1)
@@ -747,7 +747,7 @@ function create_cells(
     blockOffsets::Vector{Label},
     mergeList::Vector{Label},
     nCells::Label
-) where {Label <: Integer}
+) where {Label <: Union{Int32, Int64}}
 
     @inbounds begin
 
@@ -787,7 +787,7 @@ function create_patches(
     patchTopologyFaces::Vector{Vector{Face{Label}}},
     faces::Vector{Face{Label}},
     owner::Vector{Label}
-) where {Label <: Integer}
+) where {Label <: Union{Int32, Int64}}
     @inbounds begin
 
     patches = [Vector{Face{Label}}(0) for _ in 1:size(patchTopologyFaces, 1)]
@@ -902,7 +902,7 @@ end
 function init_mesh(
     faces::Vector{Face{Label}},
     cellsAsFaces::Vector{Vector{Label}}
-) where {Label <: Integer}
+) where {Label <: Union{Int32, Int64}}
    
     @inbounds begin
 

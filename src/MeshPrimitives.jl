@@ -30,7 +30,7 @@ Return the faces of a cell.
     1. Vector{face}
     A vector of faces.
 """
-function cellfaces(c::Cell{Label}) where {Label <: Integer}
+function cellfaces(c::Cell{Label}) where {Label <: Union{Int32, Int64}}
     @inbounds begin
     faces = Vector{Face{Label}}(6)
 

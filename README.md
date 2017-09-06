@@ -1,5 +1,7 @@
 # Blockster
 
+(c) Timofey Mukha
+
 Essentially, Blockster is a port of the CFD mesh generator blockMesh which
 comes together with OpenFOAM.
 The goal is to have most of the capabilities of blockMesh available in

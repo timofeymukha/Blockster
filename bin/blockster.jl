@@ -4,7 +4,7 @@ using ArgParse
 import JSON
 import DataStructures
 
-include("../src/Blockster.jl")
+using Blockster
 
 
 function main(args)
@@ -28,14 +28,14 @@ function main(args)
     parsedArgs::Dict{String, Any} = parse_args(s) # the result is a Dict{String,Any}
 
 
-    Label::DataType = eval(parse("Int$(parsedArgs["intsize"])"))
+    const Label::DataType = eval(parse("Int$(parsedArgs["intsize"])"))
 
     run(parsedArgs, Label)
     
 
 end
 
-function run(parsedArgs, Label)
+function run(parsedArgs::Dict{String, Any}, ::Type{Label}) where {Label <: Integer}
     dictPath::String = parsedArgs["dictionary"]
     nowrite::Bool = parsedArgs["nowrite"]
 
