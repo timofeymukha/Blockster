@@ -7,7 +7,7 @@ export Block, make_block_edges!, setedge!, create_points!, create_cells!,
        point_index, npoints, ncells
 
 " Type that defines a single block of the multi-block mesh."
-struct Block{Label <: Integer}
+mutable struct Block{Label <: Integer}
     vertexLabels::Vector{Label}
     vertices::Vector{Point}
     points::Vector{Point}
@@ -16,25 +16,38 @@ struct Block{Label <: Integer}
     edgePoints::Vector{Vector{Point}}
     edgeWeights::Vector{Vector{Float64}}
     curvedEdges::Vector{CurvedEdge}
-    nCells::SVector{3, Label}
+    nCells::SVector{3, Int}
     gradingType::String
-    grading::Vector{Any}
+    grading::Vector{Vector{Vector{Float64}}}
+
 end
+
+Block{Label}() where {Label <: Integer} =
+     Block{Label}(zeros(8),
+                Vector{Point}(8),
+                Vector{Point}(0),
+                Vector{Cell{Label}}(0),
+                Vector{Vector{Face{Label}}}(6),
+                Vector{Vector{Point}}(12),
+                Vector{Vector{Float64}}(12),
+                Vector{CurvedEdge}(0),
+                zeros(3),
+                String(""),
+                Vector{Vector{Vector{Float64}}}(0))
 
 function create_blocks(
     dict,
     vertices,
     varsAsStr,
-    Label::DataType
-) where {Label <: Integer}
+    Label::Type
+)
     nBlocks = size(dict["blocks"], 1)
     blocks = Vector{Block{Label}}(nBlocks)
 
     
     for blockI in 1:nBlocks
-        println( "constuctor")
         blocks[blockI] = Block{Label}()
-        println( "parse ncells")
+
         blocks[blockI].nCells = parse_ncells(varsAsStr, dict["blocks"][blockI][2])
 
         # read vertex numbers defining the block
@@ -53,7 +66,6 @@ function create_blocks(
             error("Incorrect grading type for block $(blockI).
                    Should be either simple or edge")
          end
-        println( "parse grading")
 
         blocks[blockI].grading = parse_grading(
                                      varsAsStr,
@@ -61,16 +73,12 @@ function create_blocks(
                                      blocks[blockI].gradingType
                                  )
 
-        println( "make edges")
         make_block_edges!(blocks[blockI])
 
-        println( "make points")
         create_points!(blocks[blockI])
 
-        println( "make cells")
         create_cells!(blocks[blockI])
 
-        println( "make bc faces")
         create_boundary_faces!(blocks[blockI])
 
     end
@@ -79,24 +87,12 @@ function create_blocks(
     return blocks
 end
 
-Block{Label}() where {Label <: Integer} =
-     Block{Label}(zeros(8),
-                Vector{Point}(8),
-                Vector{Point}(0),
-                Vector{Cell{Label}}(0),
-                Vector{Vector{Face{Label}}}(6),
-                Vector{Vector{Point}}(12),
-                Vector{Vector{Float64}}(12),
-                Vector{CurvedEdge}(0),
-                zeros(3),
-                String(""),
-                Vector{Any}(0))
 
 function convert(
     ::Type{Cell{Label}},
-    block::Block
+    block::Block{Label}
 ) where {Label <: Integer}
-    return convert(Cell, block.vertexLabels)
+    return convert(Cell{Label}, block.vertexLabels)
 end
 
 function create_boundary_faces!(block::Block{Label}) where {Label <: Integer}
@@ -240,7 +236,7 @@ function create_boundary_faces!(block::Block{Label}) where {Label <: Integer}
     end #inbounds
 end
 
-function make_block_edges!(block::Block{Label}) where {Label <: Integer}}
+function make_block_edges!(block::Block{Label}) where {Label <: Integer}
     @inbounds begin
 
     nX = block.nCells[1];
@@ -318,9 +314,9 @@ end
 
 function point_index(
     block::Block{Label},
-    i::Label,
-    j::Label,
-    k::Label
+    i,
+    j,
+    k
 ) where {Label <: Integer}
     @inbounds begin
 
@@ -536,7 +532,7 @@ function create_cells!(block::Block{Label}) where {Label <: Integer}
         for j in 1:block.nCells[2]
             for i in 1:block.nCells[1]
 
-                block.cells[cellNo] = Cell([
+                block.cells[cellNo] = Cell{Label}([
                                            point_index(block, i, j, k),
                                            point_index(block, i+1, j, k),
                                            point_index(block, i+1, j+1, k),

@@ -4,7 +4,8 @@ using ArgParse
 import JSON
 import DataStructures
 
-using Blockster
+#using Blockster
+include("../src/Blockster.jl")
 
 
 function main(args)
@@ -30,12 +31,12 @@ function main(args)
 
     const Label::DataType = eval(parse("Int$(parsedArgs["intsize"])"))
 
-    run(parsedArgs, Label)
+#    run(parsedArgs, Label)
     
 
-end
+#end
 
-function run(parsedArgs::Dict{String, Any}, ::Type{Label}) where {Label <: Integer}
+#function run(parsedArgs::Dict{String, Any}, ::Type{Label}) where {Label <: Integer}
     dictPath::String = parsedArgs["dictionary"]
     nowrite::Bool = parsedArgs["nowrite"]
 
@@ -163,7 +164,7 @@ function run(parsedArgs::Dict{String, Any}, ::Type{Label}) where {Label <: Integ
                    )
     print(" Done\n")
 
-    print("Creating ownder and neighbour lists...")
+    print("Creating owner and neighbour lists...")
     owner, neighbour, nInternalFaces = Blockster.init_mesh(faces, cellsAsFaces)
     print(" Done\n")
     
