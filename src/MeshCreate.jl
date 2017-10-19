@@ -102,8 +102,8 @@ end
 
 function create_topology(
     cells::Vector{Cell{Label}},
-    patches::Vector{Vector{Face{Label}}},
-    patchNames::Vector{String},
+    boundaryFaces::Vector{Vector{Face{Label}}},
+    boundaryPatchNames::Vector{String},
     pointCellAddressing::Vector{Vector{Label}},
     nPoints::Label
 ) where {Label<:Union{Int32,Int64}}
@@ -244,22 +244,22 @@ function create_topology(
 
     # Do the boundary faces
 
-    patchSizes = Vector{Label}(length(patches))
-    patchStarts = Vector{Label}(length(patches))
+    patchSizes = Vector{Label}(length(boundaryFaces))
+    patchStarts = Vector{Label}(length(boundaryFaces))
 
-    for patchI in eachindex(patches)
+    for patchI in eachindex(boundaryFaces)
 
-        patches = patches[patchI]
-        patchName = patchNames[patchI]
+        patchFaces = boundaryFaces[patchI]
+        patchName = boundaryPatchNames[patchI]
 
-        currPatchFaceCells = 
-            patch_face_cells(patches, cellFaces, pointCellAddressing)
+        currPatchFaceCells = patch_face_cells(patchFaces, cellFaces,
+                                              pointCellAddressing)
         currPatchStart::Label = nFaces
 
 
-        for faceI in eachindex(patches)
+        for faceI in eachindex(patchFaces)
 
-            currFace = patches[faceI]
+            currFace = patchFaces[faceI]
 
 
             # Get the cell on the inside corresponding to this face
@@ -849,17 +849,17 @@ function create_patches(
 
         quadFace = Vector{Label}(4)
 
-        for patchSurfaceI in eachindex(patchSurfaces[patchI])
+        for patchSurfaceFaceI in eachindex(patchSurfaces[patchI])
 
-            blockI = blockLabels[patchSurfaceI]
+            blockI = blockLabels[patchSurfaceFaceI]
             blockAsSurfacesI = blocksAsSurfaces[blockI]
 
-            for blockSurfaceI in eachindex(blockAsSurfacesI)
+            for surfaceI in eachindex(blockAsSurfacesI)
 
-                if samepoints(blockAsSurfacesI[blockSurfaceI], 
-                              patchSurfaces[patchI][patchSurfaceI]) 
+                if samepoints(blockAsSurfacesI[surfaceI], 
+                              patchSurfaces[patchI][patchSurfaceFaceI]) 
 
-                    blockBoundaryFaces = blocks[blockI].boundaryFaces[blockSurfaceI]
+                    blockBoundaryFaces = blocks[blockI].boundaryFaces[surfaceI]
 
                     for fI in eachindex(blockBoundaryFaces)
                         idx = blockBoundaryFaces[fI][1] +
