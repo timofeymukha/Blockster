@@ -15,7 +15,7 @@ function main(args)
          "--dictionary", "-d"        
              help = "Dictionary defining the mesh."
              required = false
-             default = joinpath("tests", "cube.json")
+             default = joinpath("tests", "cube_simple.json")
          "--nowrite"
              action = :store_true
              help = "Do not write the mesh. For performance tests"
@@ -25,6 +25,8 @@ function main(args)
              arg_type = DataType
              default = Int32
     end
+
+    println("Blockster")
 
     parsedArgs::Dict{String, Any} = parse_args(s) 
 

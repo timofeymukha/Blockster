@@ -21,7 +21,7 @@ function parse_vertices(varsAsStr::Vector{String}, vertices)
     n = length(vertices)
 
     for i in eachindex(varsAsStr)
-        eval(parse(varsAsStr[i]))
+      #  eval(parse(varsAsStr[i]))
     end
 
     floatVertices = Vector{Point}(n)
@@ -29,7 +29,7 @@ function parse_vertices(varsAsStr::Vector{String}, vertices)
         currVertex = Vector{Float64}([0, 0, 0])
         for i in 1:3
             if typeof(vertices[v][i]) == String
-                currVertex[i] = eval(parse(vertices[v][i]))
+#                currVertex[i] = eval(parse(vertices[v][i]))
             else
                 currVertex[i] = vertices[v][i]
             end
@@ -47,13 +47,13 @@ function parse_ncells(
     n = 3
 
     for i in 1:length(varsAsStr)
-        eval(parse(varsAsStr[i]))
+#        eval(parse(varsAsStr[i]))
     end
 
     intNCells = Vector{Int}(n)
     for dir in 1:n
         if typeof(nCells[dir]) == String
-            intNCells[dir]  = eval(parse(nCells[dir]))
+#            intNCells[dir]  = eval(parse(nCells[dir]))
         else
             intNCells[dir] = nCells[dir]
         end
@@ -70,7 +70,7 @@ function parse_grading(
     n = 12
 
     for i in 1:length(varsAsStr)
-        eval(parse(varsAsStr[i]))
+#        eval(parse(varsAsStr[i]))
     end
 
     # convert grading to full edge grading if necessary
@@ -95,7 +95,7 @@ function parse_grading(
             for i in 1:3
                 current = @view edgeGrading[edge][section][i]
                 if typeof(current[1]) == String
-                    current[1]  = Float64(eval(parse(current[1])))
+#                    current[1]  = Float64(eval(parse(current[1])))
                 else
                     current[1]  = Float64(current[1])
                 end
