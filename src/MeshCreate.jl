@@ -381,7 +381,7 @@ function calc_merge_info(
         for i in 1:size(blockPSurfaces, 1)
             if blockPSurfaces[i] == sI
                 foundSurface = true
-                blockPfaceLabel = i
+                blockPSurfaceLabel = i
                 break
             end
         end
