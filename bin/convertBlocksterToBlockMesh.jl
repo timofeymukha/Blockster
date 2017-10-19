@@ -14,7 +14,7 @@ function main(args)
          "--dictionary", "-d"        
              help = "Dictionary defining the mesh."
              required = false
-             default = joinpath("tests", "dict.json")
+             default = joinpath("tests", "cube.json")
     end
 
     parsedArgs = parse_args(s) 
@@ -39,7 +39,7 @@ function main(args)
     vertices = dict["vertices"]
     vertices = Blockster.parse_vertices(variablesAsStrings, vertices) 
 
-    patchNames, patchTypes, patchSurfaces = Blockster.read_boundary(dict)
+    patchNames, patchTypes, patchSurfaces = Blockster.read_boundary(dict, Int32)
     patchDicts = dict["boundary"]
 
     blockMeshDict = open(joinpath("./test_case", "system", "blockMeshDict"), "w")

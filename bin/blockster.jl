@@ -88,14 +88,17 @@ function main(args)
                    )
     print(" Done\n")
 
+    println(typeof(nFaces))
+
     nDefaultFaces = nFaces - defaultPatchStart
 
     if nDefaultFaces > 0
-        warn("Undefined block faces present in the mesh description")
+        error("Undefined block faces present in the mesh description")
     end
 
-    owner, neighbour, nInternalFaces = Blockster.crate_owner_neighbour(faces, cellsAsFaces)
+    owner, neighbour = Blockster.create_owner_neighbour(nFaces, cellsAsFaces)
 
+    nInternalFaces::Label = length(neighbour)
 
     print("Creating merge list...")
     nCells, nPoints, blockOffsets, mergeList =
@@ -160,19 +163,16 @@ function main(args)
     print(" Done\n")
 
     print("Creating owner and neighbour lists...")
-    owner, neighbour, nInternalFaces = Blockster.create_owner_neighbour(faces, cellsAsFaces)
+    owner, neighbour = Blockster.create_owner_neighbour(nFaces, cellsAsFaces)
     print(" Done\n")
+
+    nInternalFaces = length(neighbour)
     
     # change to 0-based arrays
     owner -= 1
     neighbour -= 1 
-    for i in 1:size(faces, 1)
-        faces[i] = faces[i] - 1
-    end
-
-    for i in 1:size(patchStarts, 1)
-        patchStarts[i] = patchStarts[i] - 1
-    end
+    patchStarts -= 1
+    faces -= 1
 
     println("Writing mesh")
 

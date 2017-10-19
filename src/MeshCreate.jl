@@ -1,6 +1,6 @@
 
 export point_cell_addressing, patch_face_cells, create_points, create_cells,
-create_patches, create_topology, calc_merge_info, init_mesh
+create_patches, create_topology, calc_merge_info, create_owner_neighbour 
 
 
 """
@@ -114,7 +114,7 @@ function create_topology(
 
     # Get the faces of each cell and the maximum number of faces
     cellFaces = Vector{Vector{Face{Label}}}(size(cells, 1))
-    maxFaces = 0
+    maxFaces::Label = 0
 
     for i in 1:size(cellFaces,1)
         # get the faces of the cell
@@ -128,7 +128,7 @@ function create_topology(
     # Declare the array of faces
     faces = Vector{Face{Label}}(maxFaces)
 
-    nFaces = 1
+    nFaces::Label = 1
 
     # Get point to cell addressing
     pointCellAddr = point_cell_addressing(cells, nPoints)
@@ -244,20 +244,20 @@ function create_topology(
 
     # Do the boundary faces
 
-    patchSizes = Vector{Label}(size(boundaryFaces, 1))
-    patchStarts = Vector{Label}(size(boundaryFaces, 1))
+    patchSizes = Vector{Label}(length(boundaryFaces))
+    patchStarts = Vector{Label}(length(boundaryFaces))
 
-    for patchI in 1:size(boundaryFaces, 1)
+    for patchI in eachindex(boundaryFaces)
 
         patchFaces = boundaryFaces[patchI]
         patchName = boundaryPatchNames[patchI]
 
         currPatchFaceCells = patch_face_cells(patchFaces, cellFaces,
                                               pointCellAddressing)
-        currPatchStart = nFaces
+        currPatchStart::Label = nFaces
 
 
-        for faceI in 1:size(patchFaces, 1)
+        for faceI in eachindex(patchFaces)
 
             currFace = patchFaces[faceI]
 
@@ -307,7 +307,7 @@ function create_topology(
 
     end
 
-    defaultPatchStart = nFaces
+    defaultPatchStart::Label = nFaces
 
     # Take care of "non-existing faces", put them into the default patch
     for cellI in 1:size(cellsAsFaces, 1)
@@ -325,12 +325,13 @@ function create_topology(
         end
     end
 
-    resize!(faces, nFaces-1)
+    nFaces -= 1
+    resize!(faces, nFaces)
 
     end #inbounds 
 
     return patchSizes, patchStarts, defaultPatchStart,
-           faces, nFaces-1, cellsAsFaces
+           faces, nFaces, cellsAsFaces
 
 end
 
@@ -793,7 +794,7 @@ function create_patches(
     patches = [Vector{Face{Label}}(0) for _ in 1:size(patchTopologyFaces, 1)]
 
     # compute the faces of each patch 
-    for patchI in 1:size(patches, 1)
+    for patchI in eachindex(patches)
         
         # find the owners of the surfaces definin gthe patch
         blockLabels = Vector{Label}(size(patchTopologyFaces[patchI], 1)) 
@@ -900,16 +901,16 @@ function create_patches(
 end
 
 function create_owner_neighbour(
-    faces::Vector{Face{Label}},
+    nFaces::Label,
     cellsAsFaces::Vector{Vector{Label}}
 ) where {Label <: Union{Int32, Int64}}
    
     @inbounds begin
 
-    owner = fill(Label(-1), size(faces, 1))
-    neighbour = fill(Label(-1), size(faces, 1))
+    owner = fill(Label(-1), nFaces)
+    neighbour = fill(Label(-1), nFaces)
 
-    markedFaces = fill(false, size(faces, 1))
+    markedFaces = fill(false, nFaces)
 
     nInternalFaces::Label = 0
 
@@ -938,5 +939,5 @@ function create_owner_neighbour(
     resize!(neighbour, nInternalFaces)
 
     end #inbounds
-    return owner, neighbour, nInternalFaces
+    return owner, neighbour
 end
