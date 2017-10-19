@@ -102,8 +102,8 @@ end
 
 function create_topology(
     cells::Vector{Cell{Label}},
-    boundaryFaces::Vector{Vector{Face{Label}}},
-    boundaryPatchNames::Vector{String},
+    patches::Vector{Vector{Face{Label}}},
+    patchNames::Vector{String},
     pointCellAddressing::Vector{Vector{Label}},
     nPoints::Label
 ) where {Label<:Union{Int32,Int64}}
@@ -244,22 +244,22 @@ function create_topology(
 
     # Do the boundary faces
 
-    patchSizes = Vector{Label}(length(boundaryFaces))
-    patchStarts = Vector{Label}(length(boundaryFaces))
+    patchSizes = Vector{Label}(length(patches))
+    patchStarts = Vector{Label}(length(patches))
 
-    for patchI in eachindex(boundaryFaces)
+    for patchI in eachindex(patches)
 
-        patchFaces = boundaryFaces[patchI]
-        patchName = boundaryPatchNames[patchI]
+        patches = patches[patchI]
+        patchName = patchNames[patchI]
 
-        currPatchFaceCells = patch_face_cells(patchFaces, cellFaces,
-                                              pointCellAddressing)
+        currPatchFaceCells = 
+            patch_face_cells(patches, cellFaces, pointCellAddressing)
         currPatchStart::Label = nFaces
 
 
-        for faceI in eachindex(patchFaces)
+        for faceI in eachindex(patches)
 
-            currFace = patchFaces[faceI]
+            currFace = patches[faceI]
 
 
             # Get the cell on the inside corresponding to this face
@@ -381,7 +381,7 @@ function calc_merge_info(
         for i in 1:size(blockPSurfaces, 1)
             if blockPSurfaces[i] == sI
                 foundSurface = true
-                blockPSurfaceLabel = i
+                blockPfaceLabel = i
                 break
             end
         end
@@ -791,7 +791,7 @@ function create_patches(
     blocks::Vector{Block{Label}},
     blockOffsets::Vector{Label},
     mergeList::Vector{Label},
-    blockAsSurfaces::Vector{Vector{Face{Label}}},
+    blocksAsSurfaces::Vector{Vector{Face{Label}}},
     patchSurfaces::Vector{Vector{Face{Label}}},
     surfaces::Vector{Face{Label}},
     ownerBlocks::Vector{Label}
@@ -803,17 +803,17 @@ function create_patches(
     # compute the faces of each patch 
     for patchI in eachindex(patches)
         
-        # find the owners of the surfaces defining the patch
+        # find the owners of the surfaces defining this patch
         blockLabels = Vector{Label}(length(patchSurfaces[patchI])) 
 
-        for sI in eachindex(patchSurfaces[patchI])
+        for patchSurfaceI in eachindex(patchSurfaces[patchI])
 
             foundOwner = false
             for surfaceI in eachindex(surfaces)
 
-                if samepoints(surfaces[surfaceI], patchSurfaces[patchI][sI])
+                if samepoints(surfaces[surfaceI], patchSurfaces[patchI][patchSurfaceI])
                     foundOwner = true
-                    blockLabels[sI] = ownerBlocks[surfaceI]
+                    blockLabels[patchSurfaceI] = ownerBlocks[surfaceI]
                 end
             end
 
@@ -825,16 +825,21 @@ function create_patches(
         nFaces::Label = 0
         
         # compute the number of faces on the patch
-        for patchSurfaceFaceLabel in eachindex(patchSurfaces[patchI])
-            blockI = blockLabels[patchSurfaceFaceLabel]
+        for patchSurfaceI in eachindex(patchSurfaces[patchI])
 
-            blockSurfacesI = blockAsSurfaces[blockI]
+            # Get the label of the owner block
+            blockI = blockLabels[patchSurfaceI]
 
-            for blockSurfaceLabel in eachindex(blockSurfacesI)
-                if samepoints(blockSurfacesI[blockSurfaceLabel], 
-                   patchSurfaces[patchI][patchSurfaceFaceLabel]) 
+            # The list of surfaces for the owner block
+            blockAsSurfacesI = blocksAsSurfaces[blockI]
+
+            # Among the list find the one coinciding with the
+            # patch surface. Add the amount of boundary faces.
+            for blockSurfaceI in eachindex(blockAsSurfacesI)
+                if samepoints(blockAsSurfacesI[blockSurfaceI], 
+                              patchSurfaces[patchI][patchSurfaceI]) 
                    
-                    nFaces += size(blocks[blockI].boundaryFaces[blockSurfaceLabel], 1)
+                    nFaces += size(blocks[blockI].boundaryFaces[blockSurfaceI], 1)
                 end
             end
         end
@@ -844,20 +849,20 @@ function create_patches(
 
         quadFace = Vector{Label}(4)
 
-        for patchTopologyFaceLabel in eachindex(patchSurfaces[patchI])
+        for patchSurfaceI in eachindex(patchSurfaces[patchI])
 
-            blockI = blockLabels[patchTopologyFaceLabel]
-            blockFacesI = blockAsSurfaces[blockI]
+            blockI = blockLabels[patchSurfaceI]
+            blockAsSurfacesI = blocksAsSurfaces[blockI]
 
-            for blockFaceLabel in eachindex(blockFacesI)
+            for blockSurfaceI in eachindex(blockAsSurfacesI)
 
-                if samepoints(blockFacesI[blockFaceLabel], 
-                   patchSurfaces[patchI][patchTopologyFaceLabel]) 
+                if samepoints(blockAsSurfacesI[blockSurfaceI], 
+                              patchSurfaces[patchI][patchSurfaceI]) 
 
-                    blockPatchFaces = blocks[blockI].boundaryFaces[blockFaceLabel]
+                    blockBoundaryFaces = blocks[blockI].boundaryFaces[blockSurfaceI]
 
-                    for fI in eachindex(blockPatchFaces)
-                        idx = blockPatchFaces[fI][1] +
+                    for fI in eachindex(blockBoundaryFaces)
+                        idx = blockBoundaryFaces[fI][1] +
                               blockOffsets[blockI]
                         quadFace[1] = mergeList[idx]      
                               
@@ -865,7 +870,7 @@ function create_patches(
 
                         for facePointLabel in 2:4
 
-                            idx = blockPatchFaces[fI][facePointLabel] +
+                            idx = blockBoundaryFaces[fI][facePointLabel] +
                                   blockOffsets[blockI]
                             quadFace[nUnique] = mergeList[idx]
 

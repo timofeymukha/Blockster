@@ -315,9 +315,9 @@ end
 
 function point_index(
     block::Block{Label},
-    i::Label,
-    j::Label,
-    k::Label
+    i,
+    j,
+    k
 ) where {Label <: Integer}
     @inbounds begin
 

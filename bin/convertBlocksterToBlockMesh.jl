@@ -1,3 +1,4 @@
+#!/usr/bin/env julia
 module ToBlockMesh
 
 import JSON

@@ -1,4 +1,4 @@
-#!/home/tiam/julia-903644385b/bin/julia
+#!/usr/bin/env julia
 module blockster
 
 using ArgParse
