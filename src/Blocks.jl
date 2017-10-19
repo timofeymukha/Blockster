@@ -64,8 +64,8 @@ function create_blocks(
 
         if !(blocks[blockI].gradingType == "simple" ||
              blocks[blockI].gradingType == "edge")
-            error("Incorrect grading type for block $(blockI).
-                   Should be either simple or edge")
+            error("""Incorrect grading type for block $(blockI).
+                  Should be either simple or edge""")
          end
 
         blocks[blockI].grading = parse_grading(
@@ -102,8 +102,8 @@ function create_boundary_faces!(block::Block{Label}) where {Label <: Integer}
         nY =  block.nCells[2]
         nZ =  block.nCells[3]
 
-        wallLabel::Int = 1
-        wallFaceLabel::Int = 1
+        wallLabel::Label = 1
+        wallFaceLabel::Label = 1
 
         # x-direction
 
@@ -283,13 +283,13 @@ function setedge!(
     grading = block.grading[edgeI]
 
     # Loop through the curved edges and compare to given edge
-    for i in 1:size(block.curvedEdges, 1)
+    for i in eachindex(block.curvedEdges)
 
         curvedEdge = block.curvedEdges[i]
 
         cmp = compare(curvedEdge,
-                    block.vertices[startVertex],
-                    block.vertices[endVertex])
+                      block.vertices[startVertex],
+                      block.vertices[endVertex])
 
         if cmp > 0
             # Divide the line
@@ -315,9 +315,9 @@ end
 
 function point_index(
     block::Block{Label},
-    i,
-    j,
-    k
+    i::Label,
+    j::Label,
+    k::Label
 ) where {Label <: Integer}
     @inbounds begin
 

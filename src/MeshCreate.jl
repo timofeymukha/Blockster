@@ -907,6 +907,16 @@ function create_patches(
     return patches
 end
 
+"""
+    create_owner_neighbour(nFaces, cellsAsFaces)
+
+Create owner and neigbour arrays.
+
+Goes through the faces of each cell. The cell that contains a faces first
+becomes its owner. The second cell to contain the same face becomes the 
+neighbour. Note that the number of neighbours is equal to the number of 
+internal faces.
+"""
 function create_owner_neighbour(
     nFaces::Label,
     cellsAsFaces::Vector{Vector{Label}}

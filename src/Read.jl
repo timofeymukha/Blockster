@@ -18,9 +18,9 @@ function read_boundary(meshDict, Label::Type)
 end
 
 function parse_vertices(varsAsStr::Vector{String}, vertices)
-    n = size(vertices, 1)
+    n = length(vertices)
 
-    for i in 1:length(varsAsStr)
+    for i in eachindex(varsAsStr)
         eval(parse(varsAsStr[i]))
     end
 
