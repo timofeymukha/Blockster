@@ -35,23 +35,24 @@ Block{Label}() where {Label <: Integer} =
                 String(""),
                 Vector{Vector{Vector{Float64}}}(0))
 
+"Create an array of discretised blocks based on parsed dictionary."
 function create_blocks(
     dict,
     vertices,
     varsAsStr,
     Label::Type
 )
-    nBlocks = size(dict["blocks"], 1)
+    nBlocks = size(dict, 1)
     blocks = Vector{Block{Label}}(nBlocks)
 
     
     for blockI in 1:nBlocks
         blocks[blockI] = Block{Label}()
 
-        blocks[blockI].nCells = parse_ncells(varsAsStr, dict["blocks"][blockI][2])
+        blocks[blockI].nCells = parse_ncells(varsAsStr, dict[blockI][2])
 
         # read vertex numbers defining the block
-        blocks[blockI].vertexLabels = dict["blocks"][blockI][1] + 1
+        blocks[blockI].vertexLabels = dict[blockI][1] + 1
 
         # the coordinates of all vertices defining the block
         # corresponding to the vertex numbers defining the block
@@ -59,7 +60,7 @@ function create_blocks(
             blocks[blockI].vertices[j] = vertices[blocks[blockI].vertexLabels[j]]
         end
 
-        blocks[blockI].gradingType = dict["blocks"][blockI][3]
+        blocks[blockI].gradingType = dict[blockI][3]
 
         if !(blocks[blockI].gradingType == "simple" ||
              blocks[blockI].gradingType == "edge")
@@ -69,7 +70,7 @@ function create_blocks(
 
         blocks[blockI].grading = parse_grading(
                                      varsAsStr,
-                                     dict["blocks"][blockI][4],
+                                     dict[blockI][4],
                                      blocks[blockI].gradingType
                                  )
 

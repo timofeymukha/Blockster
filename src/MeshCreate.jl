@@ -899,7 +899,7 @@ function create_patches(
     return patches
 end
 
-function init_mesh(
+function create_owner_neighbour(
     faces::Vector{Face{Label}},
     cellsAsFaces::Vector{Vector{Label}}
 ) where {Label <: Union{Int32, Int64}}

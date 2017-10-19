@@ -24,7 +24,11 @@ function compare(
     return compare(edge1, edge2.startVertex, edge2.endVertex)
 end
 
-function line_divide(edge::CurvedEdge, nDivisions::Int, grading)
+function line_divide(
+    edge::CurvedEdge,
+    nDivisions::Int,
+    grading
+)
 
     points = Vector{Point}(nDivisions+1)
     divisions = Vector{Float64}(nDivisions+1)
@@ -102,7 +106,14 @@ function line_divide(edge::CurvedEdge, nDivisions::Int, grading)
     return (points, divisions)
 end
 
-function cell_to_cell_expansion_ratio(expRatio::Float64, nDivisions::Int)
+"""
+Compute the cell-to-cell expansion ratio, given number of divisions and
+the total expansion ratio.
+"""
+function cell_to_cell_expansion_ratio(
+    expRatio::Float64,
+    nDivisions::Int
+)
     return nDivisions > 1 ? expRatio^(1.0/(nDivisions - 1)) : 0.0
 end
 

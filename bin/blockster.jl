@@ -60,7 +60,7 @@ function main(args)
     Blockster.check_patch_vertex_labels(patchNames, patchSurfaces, vertices)
 
     print("Creating blocks...")
-    blocks = Blockster.create_blocks(dict, vertices, variablesAsStrings, Label)
+    blocks = Blockster.create_blocks(dict["blocks"], vertices, variablesAsStrings, Label)
     print(" Done\n")
 
     # Create mesh from the blocks
@@ -94,7 +94,7 @@ function main(args)
         warn("Undefined block faces present in the mesh description")
     end
 
-    owner, neighbour, nInternalFaces = Blockster.init_mesh(faces, cellsAsFaces)
+    owner, neighbour, nInternalFaces = Blockster.crate_owner_neighbour(faces, cellsAsFaces)
 
 
     print("Creating merge list...")
@@ -160,7 +160,7 @@ function main(args)
     print(" Done\n")
 
     print("Creating owner and neighbour lists...")
-    owner, neighbour, nInternalFaces = Blockster.init_mesh(faces, cellsAsFaces)
+    owner, neighbour, nInternalFaces = Blockster.create_owner_neighbour(faces, cellsAsFaces)
     print(" Done\n")
     
     # change to 0-based arrays
