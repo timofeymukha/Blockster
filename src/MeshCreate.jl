@@ -15,7 +15,7 @@ current point.
 function point_cell_addressing(
     cells::Vector{Cell{Label}},
     nPoints::Label
-) where {Label <: Union{Int32, Int64}}
+) where {Label <: Union{Int32,Int64}}
     @inbounds begin
 
     # Number of cells each point is included in
@@ -45,7 +45,7 @@ function patch_face_cells(
     faces::Vector{Face{Label}},
     cellFaces::Vector{Vector{Face{Label}}},
     pointCellAddressing::Vector{Vector{Label}}
-) where {Label <: Union{Int32, Int64}}
+) where {Label <: Union{Int32,Int64}}
 
     @inbounds begin
 
@@ -106,7 +106,7 @@ function create_topology(
     boundaryPatchNames::Vector{String},
     pointCellAddressing::Vector{Vector{Label}},
     nPoints::Label
-) where {Label<:Union{Int32, Int64}}
+) where {Label<:Union{Int32,Int64}}
     @inbounds begin
 
     # Define a vector of cells defined as face index vectors
@@ -338,12 +338,12 @@ end
 
 function calc_merge_info(
     blocks::Vector{Block{Label}},
-    blockFaces::Vector{Face{Label}},
-    blockCellsAsFaces::Vector{Vector{Label}},
-    faceOwnerBlocks::Vector{Label},
-    faceNeighbourBlocks::Vector{Label},
-    nInternalFaces::Label
-) where {Label <: Union{Int32, Int64}}
+    surfaces::Vector{Face{Label}},
+    blocksAsSurfaces::Vector{Vector{Label}},
+    ownerBlocks::Vector{Label},
+    neighbourBlocks::Vector{Label},
+    nInternalSurfaces::Label
+) where {Label <: Union{Int32,Int64}}
     @inbounds begin
 
     nBlocks::Label = length(blocks)
@@ -360,146 +360,153 @@ function calc_merge_info(
 
     mergeList = fill(Label(-1), nPoints)
 
-    glueMergePairs = Vector{Vector{Vector{Label}}}(length(blockFaces))
+    glueMergePairs = Vector{Vector{Vector{Label}}}(length(surfaces))
 
 
-    # Go through all the faces in the topology
-    for sI in eachindex(blockFaces)
+    # Go through all the surfaces in the topology
+    for sI in eachindex(surfaces)
 
-        # Grab the owner of the face
-        blockPLabel = faceOwnerBlocks[sI]
-        # Grab the points of the owner of the face
+        # Grab the owner of the surface
+        blockPLabel = ownerBlocks[sI]
+        # Grab the points of the owner of the surface
         blockPPoints = blocks[blockPLabel].points
-        # Grab the faces of the onwer of the face
-        blockPFaces = blockCellsAsFaces[blockPLabel]
+        # Grab the surfaces of the onwer of the surface
+        blockPSurfaces = blocksAsSurfaces[blockPLabel]
 
-        # Insure that one of the faces of the owner-block
+        # Insure that one of the suraces of the owner-block
         # is in fact sI
-        foundFace = false
+        foundSurface = false
 
-        blockPfaceLabel = 0
-        for i in 1:size(blockPFaces, 1)
-            if blockPFaces[i] == sI
-                foundFace = true
+        blockPSurfaceLabel = 0
+        for i in 1:size(blockPSurfaces, 1)
+            if blockPSurfaces[i] == sI
+                foundSurface = true
                 blockPfaceLabel = i
                 break
             end
         end
 
-        if !foundFace
+        if !foundSurface
             error("calc_merge_info(): cannot find merge face
                    for block $blockPLabel")
         end
     
         # faces on the block surface
-        blockPfaceFaces = blocks[blockPLabel].boundaryFaces[blockPfaceLabel]
+        blockPSurfaceFaces = blocks[blockPLabel].boundaryFaces[blockPSurfaceLabel]
 
         glueMergePairs[sI] = [Vector{Label}(1) 
-                              for _ in 1:size(blockPfaceFaces, 1)]
+                              for _ in 1:size(blockPSurfaceFaces, 1)]
         
         bbMin, bbMax = bounding_box(blocks[blockPLabel].points)
-        mergeSqrDist = norm((bbMax-bbMin)*1e-5)^2
+        mergeSqrDist = norm((bbMax - bbMin)*1e-5)^2
 
         sqrMergeTol = 1e+6
 
-        # for all faces on the sirface
-        for fI in eachindex(blockPfaceFaces)
+        # for all faces on the surface
+        for fI in eachindex(blockPSurfaceFaces)
             
             # points of current face
-            blockPfaceFacePoints = blockPfaceFaces[fI]
+            blockPSurfaceFacePoints = blockPSurfaceFaces[fI]
 
            
             # for all points of current face
-            for pI in eachindex(blockPfaceFacePoints)
+            for pI in eachindex(blockPSurfaceFacePoints)
                 #compare to the other points on this face
-                for pI2 in eachindex(blockPfaceFacePoints)
+                for pI2 in eachindex(blockPSurfaceFacePoints)
                     if pI != pI2
                     
                         magSqrDist = norm(
-                            blockPPoints[blockPfaceFacePoints[pI]] -
-                            blockPPoints[blockPfaceFacePoints[pI2]])^2
+                            blockPPoints[blockPSurfaceFacePoints[pI]] -
+                            blockPPoints[blockPSurfaceFacePoints[pI2]])^2
+
+                        # Points are so close, we need to merge them
                         if magSqrDist < mergeSqrDist
                             PpointLabel = 
-                                blockPfaceFacePoints[pI] +
+                                blockPSurfaceFacePoints[pI] +
                                 blockOffsets[blockPLabel];
 
                             PpointLabel2 =
-                                blockPfaceFacePoints[pI2] +
+                                blockPSurfaceFacePoints[pI2] +
                                 blockOffsets[blockPLabel];
                             
-                            minPP2 = min(PpointLabel, PpointLabel2);
+                            minPointLabel = min(PpointLabel, PpointLabel2);
 
                             if mergeList[PpointLabel] != -1
-                                minPP2 = min(minPP2, mergeList[PpointLabel]);
+                                minPointLabel = min(minPP2, mergeList[PpointLabel]);
                             end
 
                             if (mergeList[PpointLabel2] != -1)
-                                minPP2 = min(minPP2, mergeList[PpointLabel2]);
+                                minPointLabel = min(minPP2, mergeList[PpointLabel2]);
                             end 
                             
-                            mergeList[PpointLabel2] = minPP2
-                            mergeList[PpointLabel] = minPP2
+                            mergeList[PpointLabel2] = minPointLabel
+                            mergeList[PpointLabel] = minPointLabel
                         else
                             sqrMergeTol = min(sqrMergeTol, magSqrDist)
                         end
                     end
                 end
             end 
-        end # for all faces on current blockface
+        end # for all faces on current surface 
 
         sqrMergeTol /= 10
 
         # if suraface is internal
-        if sI <= nInternalFaces
-            blockNLabel = faceNeighbourBlocks[sI];
+        if sI <= nInternalSurfaces
+            blockNLabel = neighbourBlocks[sI];
             blockNPoints = blocks[blockNLabel].points;
-            blockNFaces = blockCellsAsFaces[blockNLabel]; 
+            blockNSurfaces = blocksAsSurfaces[blockNLabel]; 
             
-            blockNfaceLabel = 1
-            foundFace = false
-            for i in 1:size(blockNFaces, 1)
-                if blockNFaces[i] == sI 
-                   blockNfaceLabel = i    
-                   foundFace = true     
+            blockNSurfaceLabel = 1
+            foundSurface = false
+            for i in 1:size(blockNSurfaces, 1)
+                if blockNSurfaces[i] == sI 
+                   blockNSurfaceLabel = i    
+                   foundSurface = true     
                    break
                end
             end
 
-            if !foundFace
+            if !foundSurface
                 error("calc_merge_info(): cannot find merge face
                       for block $blockNLabel")
             end
 
 
-            blockNfaceFaces =
-                blocks[blockNLabel].boundaryFaces[blockNfaceLabel]
+            blockNSurfaceFaces =
+                blocks[blockNLabel].boundaryFaces[blockNSurfaceLabel]
 
-            if size(blockPfaceFaces, 1) != size(blockNfaceFaces, 1)     
+            if length(blockPSurfaceFaces) != length(blockNSurfaceFaces)     
                 error("calc_merge_info(): inconsistent number of faces
-                      between block par $blockPlabel $blockNlabel")
+                      between block pair $blockPlabel $blockNlabel")
             end
 
             # n^2 point search over all points of all faces of
             # master block over all points of all faces of slave block
-            for fI in 1:size(blockPfaceFaces, 1)
-                blockPfaceFacePoints = blockPfaceFaces[fI]
+
+            # for each face on master block
+            for fI in eachindex(blockPSurfaceFaces)
+                blockPSurfaceFacePoints = blockPSurfaceFaces[fI]
 
                 resize!(glueMergePairs[sI][fI], 
-                        size(blockPfaceFacePoints, 1))
+                        size(blockPSurfaceFacePoints, 1))
 
                 glueMergePairs[sI][fI] = 
-                    fill(-1, size(blockPfaceFacePoints, 1))
+                    fill(Label(-1), length(blockPSurfaceFacePoints))
 
-                for pI in 1:size(blockPfaceFacePoints, 1)
+                # for each point on the face of the master block
+                for pI in eachindex(blockPSurfaceFacePoints)
                     
-                    for fIN in 1:size(blockNfaceFaces, 1)
-                        blockNfaceFacePoints =
-                            blockNfaceFaces[fIN]
+                    # for each face of the slave block
+                    for fIN in eachindex(blockNSurfaceFaces)
+                        blockNSurfaceFacePoints =
+                            blockNSurfaceFaces[fIN]
 
-                        for pIN in 1:size(blockNfaceFacePoints, 1)         
+                        # for each point on the face of the slave block
+                        for pIN in eachindex(blockNSurfaceFacePoints)         
 
-                            p1 = blockPPoints[blockPfaceFacePoints[pI]] 
-                            p2 = blockNPoints[blockNfaceFacePoints[pIN]]
+                            p1 = blockPPoints[blockPSurfaceFacePoints[pI]] 
+                            p2 = blockNPoints[blockNSurfaceFacePoints[pIN]]
 
                             diff = p1 - p2
                             sqrNorm = diff[1]*diff[1] +
@@ -510,31 +517,32 @@ function calc_merge_info(
                                 # Found a pair
 
                                 glueMergePairs[sI][fI][pI] =
-                                    blockNfaceFacePoints[pIN]
+                                    blockNSurfaceFacePoints[pIN]
+
                                 PPointLabel =
-                                    blockPfaceFacePoints[pI] + blockOffsets[blockPLabel]
+                                    blockPSurfaceFacePoints[pI] + blockOffsets[blockPLabel]
                                     
                                 NPointLabel =
-                                    blockNfaceFacePoints[pIN] + blockOffsets[blockNLabel]
+                                    blockNSurfaceFacePoints[pIN] + blockOffsets[blockNLabel]
                                 
-                                minPN = min(PPointLabel, NPointLabel)    
+                                minPointLabel = min(PPointLabel, NPointLabel)    
 
                                 if mergeList[PPointLabel] != -1
-                                    minPN = min(minPN, mergeList[PPointLabel])
+                                    minPointLabel = min(minPN, mergeList[PPointLabel])
                                 end
 
                                 if mergeList[NPointLabel] != -1
-                                    minPN = min(minPN, mergeList[NPointLabel])
+                                    minPointLabel = min(minPN, mergeList[NPointLabel])
                                 end
 
-                                mergeList[PPointLabel] = minPN
-                                mergeList[NPointLabel] = minPN
+                                mergeList[PPointLabel] = minPointLabel
+                                mergeList[NPointLabel] = minPointLabel
                             end
                         end
                     end
                 end # for point in current face of current blockface
 
-                for pI in size(blockPfaceFacePoints, 1)
+                for pI in eachindex(blockPSurfaceFacePoints)
                     if glueMergePairs[sI][fI][pI] == -1
                         error("Inconsitent point location between block pair
                             $(blockPLabel) and $(blockNLabel)
@@ -542,127 +550,127 @@ function calc_merge_info(
                             
                     end
                 end
-            end # for face in current blockface
+            end # for face in current block surface
         end #if surface is internal
+    end # for all surfaces of blocks
 
-     end # for all surfaces of blocks
+    blockInternalSurfaces = surfaces[1:nInternalSurfaces]
+    changedPointMerge = true 
 
-     blockInternalFaces = blockFaces[1:nInternalFaces]
-     changedPointMerge = true 
+    nPasses = 0
 
-     nPasses = 0
+    while changedPointMerge
+        changedPointMerge = false
+        nPasses += 1
 
-     while changedPointMerge
-         changedPointMerge = false
-         nPasses += 1
+        for sI in eachindex(blockInternalSurfaces)
+            blockPlabel = ownerBlocks[sI]
+            blockNlabel = neighbourBlocks[sI]
 
-         for sI in 1:size(blockInternalFaces, 1)
-             blockPlabel = faceOwnerBlocks[sI]
-             blockNlabel = faceNeighbourBlocks[sI]
+            blockPSurfaces = blocksAsSurfaces[blockPlabel]
+            blockNSurfaces = blocksAsSurfaces[blockNlabel]
 
-             blockPfaces = blockCellsAsFaces[blockPlabel]
-             blockNfaces = blockCellsAsFaces[blockNlabel]
+            blockPSurfaceLabel = 0    
+            for i in 1:size(blockPSurfaces, 1)
+                if surfaces[blockPSurfaces[i]] ==
+                   blockInternalSurfaces[sI]
+                
+                   blockPSurfaceLabel = i
+                   break
+               end
+            end
 
-             blockPfaceLabel = 0    
-             for i in 1:size(blockPfaces, 1)
-                 if blockFaces[blockPfaces[i]] ==
-                    blockInternalFaces[sI]
-                 
-                    blockPfaceLabel = i
-                    break
-                end
-             end
-
-            blockNfaceLabel = 0    
-            for i in 1:size(blockNfaces, 1)
-                if blockFaces[blockNfaces[i]] ==
-                   blockInternalFaces[sI]
-                    blockNfaceLabel = i
+            blockNSurfaceLabel = 0    
+            for i in 1:size(blockNSurfaces, 1)
+                if surfaces[blockNSurfaces[i]] ==
+                   blockInternalSurfaces[sI]
+                    blockNSurfaceLabel = i
                     break
                 end
             end
 
-            blockPfaceFaces = blocks[blockPlabel].boundaryFaces[blockPfaceLabel]
+            blockPSurfaceFaces = blocks[blockPlabel].boundaryFaces[blockPSurfaceLabel]
 
-            for fI in size(blockPfaceFaces, 1)
+            for fI in eachindex(blockPSurfaceFaces)
             
-                blockPfaceFacePoints = blockPfaceFaces[fI]
+                blockPSurfaceFacePoints = blockPSurfaceFaces[fI]
 
                 
-                for pI = 1:size(blockPfaceFacePoints, 1)
-                    PpointLabel = 
-                        blockPfaceFacePoints[pI] + blockOffsets[blockPlabel]
+                for pI in eachindex(blockPSurfaceFacePoints)
+                    pPointLabel = 
+                        blockPSurfaceFacePoints[pI] + blockOffsets[blockPlabel]
                         
 
-                    NpointLabel = 
+                    nPointLabel = 
                         glueMergePairs[sI][fI][pI] + blockOffsets[blockNlabel]
                         
 
-                    if mergeList[PpointLabel] != mergeList[NpointLabel]
+                    if mergeList[pPointLabel] != mergeList[nPointLabel]
                         changePointMerge = true
-                        minPN = min(mergeList[PpointLabel], mergeList[NpointLabel])
-                        mergeList[PpointLabel] = minPN
-                        mergeList[NpointLabel] = minPN
+                        minPointLabel = min(mergeList[pPointLabel], mergeList[nPointLabel])
+                        mergeList[pPointLabel] = minPointLabel
+                        mergeList[nPointLabel] = minPointLabel
                     end
                 end
             end
 
-         end # for each interal face
+        end # for each interal face
 
-         if nPasses > 100
-             error("calc_merge_info(): Point merging faild after max number
-                   of passes.")
-         end
+        if nPasses > 100
+            error("calc_merge_info(): Point merging failed after max number
+                  of passes.")
+        end
 
      end # while
 
-     for sI in 1:size(blockInternalFaces, 1)
-        blockPlabel = faceOwnerBlocks[sI]
-        blockNlabel = faceNeighbourBlocks[sI]
+    # Check all points have been merged
+    for sI in eachindex(blockInternalSurfaces)
+        blockPlabel = ownerBlocks[sI]
+        blockNlabel = neighbourBlocks[sI]
 
-        blockPfaces = blockCellsAsFaces[blockPlabel]
-        blockNfaces = blockCellsAsFaces[blockNlabel]
+        blockPSurfaces = blocksAsSurfaces[blockPlabel]
+        blockNSurfaces = blocksAsSurfaces[blockNlabel]
 
         blockPpoints = blocks[blockPlabel].points
         blockNpoints = blocks[blockNlabel].points
 
-        foundFace = false
+        foundSurface = false
         blockPfaceLabel = 0
 
-        for i in 1:size(blockPfaces, 1)
-            if blockFaces[blockPfaces[i]] == blockInternalFaces[sI]
+        for i in 1:size(blockPSurfaces, 1)
+            if surfaces[blockPSurfaces[i]] == blockInternalSurfaces[sI]
                 blockPfaceLabel = i
-                foundFace = true
+                foundSurface = true
             end
         end
 
-        if !foundFace
+        if !foundSurface
             error("Cannot find merge face for block $blockPlabel")    
         end
 
-        foundFace = false
-        blockNfaceLabel = 0
+        foundSurface = false
+        blockNSurfaceLabel = 0
 
-        for i in 1:size(blockNfaces, 1)
-            if blockFaces[blockNfaces[i]] == blockInternalFaces[sI]
-                blockNfaceLabel = i
-                foundFace = true
+        for i in 1:size(blockNSurfaces, 1)
+            if surfaces[blockNSurfaces[i]] == blockInternalSurfaces[sI]
+                blockNSurfaceLabel = i
+                foundSurface = true
             end
         end
 
-        if !foundFace
+        if !foundSurface
             error("Cannot find merge face for block $blockNlabel")    
         end
 
-        blockPfaceFaces = blocks[blockPlabel].boundaryFaces[blockPfaceLabel]
-        blockNfaceFaces = blocks[blockNlabel].boundaryFaces[blockNfaceLabel]
+        blockPSurfaceFaces = blocks[blockPlabel].boundaryFaces[blockPfaceLabel]
+        blockNSurfaceFaces = blocks[blockNlabel].boundaryFaces[blockNSurfaceLabel]
 
 
-        for fI in 1:size(blockPfaceFaces, 1)
-            blockPfaceFacePoints = blockPfaceFaces[fI]
+        for fI in eachindex(blockPSurfaceFaces)
+            blockPSurfaceFacePoints = blockPSurfaceFaces[fI]
 
-            for pI in 1:size(blockPfaceFacePoints, 1)
-                PpointLabel = blockPfaceFacePoints[pI] + 
+            for pI in 1:size(blockPSurfaceFacePoints, 1)
+                PpointLabel = blockPSurfaceFacePoints[pI] + 
                               blockOffsets[blockPlabel]
 
                 if mergeList[PpointLabel] == -1              
@@ -676,11 +684,11 @@ function calc_merge_info(
             end
         end
 
-        for fIN in 1:size(blockNfaceFaces, 1)
-            blockNfaceFacePoints = blockNfaceFaces[fIN]
+        for fIN in eachindex(blockNSurfaceFaces)
+            blockNSurfaceFacePoints = blockNSurfaceFaces[fIN]
 
-            for pIN in 1:size(blockNfaceFacePoints, 1)
-                NpointLabel = blockNfaceFacePoints[pIN] + 
+            for pIN in eachindex(blockNSurfaceFacePoints)
+                NpointLabel = blockNSurfaceFacePoints[pIN] + 
                               blockOffsets[blockNlabel]
 
                 if mergeList[NpointLabel] == -1              
@@ -693,28 +701,29 @@ function calc_merge_info(
                 end
             end
         end
-     end # for internal blockface
+     end # for internal block surface
 
-     #Sort merge list to return new point label (in new shorter list)
-     newPointLabel = 1
+    #Sort merge list to return new point label (in new shorter list)
+    newPointLabel = 1
 
-     for pointLabel in 1:size(mergeList, 1)
-        if mergeList[pointLabel] > pointLabel
-            error("Merge list contains point index out of range")
-        end
+    for pointLabel in eachindex(mergeList)
+       if mergeList[pointLabel] > pointLabel
+           error("Merge list contains point index out of range")
+       end
 
-        if mergeList[pointLabel] == -1 || mergeList[pointLabel] == pointLabel
-            mergeList[pointLabel] = newPointLabel
-            newPointLabel += 1
-        else
-            mergeList[pointLabel] = mergeList[mergeList[pointLabel]]
-        end
-     end
+       # if point is internal or had the least index of the two merged points
+       if mergeList[pointLabel] == -1 || mergeList[pointLabel] == pointLabel
+           mergeList[pointLabel] = newPointLabel
+           newPointLabel += 1
+       else
+           mergeList[pointLabel] = mergeList[mergeList[pointLabel]]
+       end
+    end
 
-     nPoints = newPointLabel - 1
-     
-     end # inbounds
-     return nCells, nPoints, blockOffsets, mergeList
+    nPoints = newPointLabel - 1
+    
+    end # inbounds
+    return nCells, nPoints, blockOffsets, mergeList
      
 end
 
@@ -729,16 +738,17 @@ function create_points(
 
     points = Vector{Point}(nPoints)
 
-    for blockI in 1:size(blocks, 1)
+    for blockI in eachindex(blocks)
         blockPoints = blocks[blockI].points
 
-        for blockPointI in 1:size(blockPoints, 1)
+        # Put each point according to its index in the merge list
+        for blockPointI in eachindex(blockPoints)
             points[mergeList[blockOffsets[blockI] + blockPointI]] = 
                 blockPoints[blockPointI]
         end
     end
 
-    end #indbounds
+    end #inbounds
     return points
 end
 
@@ -747,7 +757,7 @@ function create_cells(
     blockOffsets::Vector{Label},
     mergeList::Vector{Label},
     nCells::Label
-) where {Label <: Union{Int32, Int64}}
+) where {Label <: Union{Int32,Int64}}
 
     @inbounds begin
 
@@ -755,15 +765,13 @@ function create_cells(
 
     cellLabel::Label = 1
 
-    for blockI in 1:size(blocks, 1)
+    for blockI in eachindex(blocks)
         blockCells = blocks[blockI].cells
 
-        cellPoints = Vector{Label}(0)
-        for blockCellI in 1:size(blockCells,1 )
+        for blockCellI in eachindex(blockCells)
+            cellPoints = Vector{Label}(length(blockCells[blockCellI]))
 
-            resize!(cellPoints, size(blockCells[blockCellI], 1))
-
-            for cellPointI in 1:size(cellPoints, 1)
+            for cellPointI in eachindex(cellPoints)
                 idx =  blockCells[blockCellI][cellPointI] +
                        blockOffsets[blockI]
                 cellPoints[cellPointI] = mergeList[idx]    
@@ -783,50 +791,50 @@ function create_patches(
     blocks::Vector{Block{Label}},
     blockOffsets::Vector{Label},
     mergeList::Vector{Label},
-    blockFaces::Vector{Vector{Face{Label}}},
-    patchTopologyFaces::Vector{Vector{Face{Label}}},
-    faces::Vector{Face{Label}},
-    owner::Vector{Label}
-) where {Label <: Union{Int32, Int64}}
+    blockAsSurfaces::Vector{Vector{Face{Label}}},
+    patchSurfaces::Vector{Vector{Face{Label}}},
+    surfaces::Vector{Face{Label}},
+    ownerBlocks::Vector{Label}
+) where {Label <: Union{Int32,Int64}}
     @inbounds begin
 
-    patches = [Vector{Face{Label}}(0) for _ in 1:size(patchTopologyFaces, 1)]
+    patches = [Vector{Face{Label}}(0) for _ in 1:size(patchSurfaces, 1)]
 
     # compute the faces of each patch 
     for patchI in eachindex(patches)
         
-        # find the owners of the surfaces definin gthe patch
-        blockLabels = Vector{Label}(size(patchTopologyFaces[patchI], 1)) 
+        # find the owners of the surfaces defining the patch
+        blockLabels = Vector{Label}(length(patchSurfaces[patchI])) 
 
-        for fI in 1:size(patchTopologyFaces[patchI], 1)
+        for sI in eachindex(patchSurfaces[patchI])
 
             foundOwner = false
-            for faceI in 1:size(faces, 1)
+            for surfaceI in eachindex(surfaces)
 
-                if samepoints(faces[faceI], patchTopologyFaces[patchI][fI])
+                if samepoints(surfaces[surfaceI], patchSurfaces[patchI][sI])
                     foundOwner = true
-                    blockLabels[fI] = owner[faceI]
+                    blockLabels[sI] = ownerBlocks[surfaceI]
                 end
             end
 
             if foundOwner == false
-                error("Could not find owner of face $fI of patch $patchI")
+                error("Could not find owner of facesIfI of patch $patchI")
             end
         end
 
         nFaces::Label = 0
         
         # compute the number of faces on the patch
-        for patchTopologyFaceLabel in 1:size(patchTopologyFaces[patchI], 1)
-            blockI = blockLabels[patchTopologyFaceLabel]
+        for patchSurfaceFaceLabel in eachindex(patchSurfaces[patchI])
+            blockI = blockLabels[patchSurfaceFaceLabel]
 
-            blockFacesI = blockFaces[blockI]
+            blockSurfacesI = blockAsSurfaces[blockI]
 
-            for blockFaceLabel in 1:size(blockFacesI, 1)
-                if samepoints(blockFacesI[blockFaceLabel], 
-                   patchTopologyFaces[patchI][patchTopologyFaceLabel]) 
+            for blockSurfaceLabel in eachindex(blockSurfacesI)
+                if samepoints(blockSurfacesI[blockSurfaceLabel], 
+                   patchSurfaces[patchI][patchSurfaceFaceLabel]) 
                    
-                    nFaces += size(blocks[blockI].boundaryFaces[blockFaceLabel], 1)
+                    nFaces += size(blocks[blockI].boundaryFaces[blockSurfaceLabel], 1)
                 end
             end
         end
@@ -836,19 +844,19 @@ function create_patches(
 
         quadFace = Vector{Label}(4)
 
-        for patchTopologyFaceLabel in 1:size(patchTopologyFaces[patchI], 1)
+        for patchTopologyFaceLabel in eachindex(patchSurfaces[patchI])
 
             blockI = blockLabels[patchTopologyFaceLabel]
-            blockFacesI = blockFaces[blockI]
+            blockFacesI = blockAsSurfaces[blockI]
 
-            for blockFaceLabel in 1:size(blockFacesI, 1)
+            for blockFaceLabel in eachindex(blockFacesI)
 
                 if samepoints(blockFacesI[blockFaceLabel], 
-                   patchTopologyFaces[patchI][patchTopologyFaceLabel]) 
+                   patchSurfaces[patchI][patchTopologyFaceLabel]) 
 
                     blockPatchFaces = blocks[blockI].boundaryFaces[blockFaceLabel]
 
-                    for fI in 1:size(blockPatchFaces, 1)
+                    for fI in eachindex(blockPatchFaces)
                         idx = blockPatchFaces[fI][1] +
                               blockOffsets[blockI]
                         quadFace[1] = mergeList[idx]      
@@ -879,7 +887,7 @@ function create_patches(
                             patchFaces[faceLabel] = quadFace
                             faceLabel += 1
                         elseif nUnique == 3
-                            warn("Boundary face does not have 4 unique points")    
+                            error("Boundary face does not have 4 unique points")    
                             patchFaces[faceLabel] = quadFace[1:3]
                             faceLabel += 1
 
@@ -902,7 +910,7 @@ end
 function create_owner_neighbour(
     nFaces::Label,
     cellsAsFaces::Vector{Vector{Label}}
-) where {Label <: Union{Int32, Int64}}
+) where {Label <: Union{Int32,Int64}}
    
     @inbounds begin
 
