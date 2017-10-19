@@ -1,41 +1,42 @@
 #!/home/tiam/julia-903644385b/bin/julia
 module blockster
 
-using ArgParse
+#using ArgParse
 import JSON
 import DataStructures
 
 using Blockster
 
 function main(args)
-    s = ArgParseSettings(description =
-            "Blockster. A package for generating multi-block structured hexadral meshes")
+#    s = ArgParseSettings(description =
+#            "Blockster. A package for generating multi-block structured hexadral meshes")
 
-    @add_arg_table s begin
-         "--dictionary", "-d"        
-             help = "Dictionary defining the mesh."
-             required = false
-             default = joinpath("tests", "cube_simple.json")
-         "--nowrite"
-             action = :store_true
-             help = "Do not write the mesh. For performance tests"
-         "--intsize"
-             help = "Number of bits used for integers"
-             required = false
-             arg_type = DataType
-             default = Int32
-    end
+#    @add_arg_table s begin
+#         "--dictionary", "-d"        
+#             help = "Dictionary defining the mesh."
+#             required = false
+#             default = joinpath("tests", "cube_simple.json")
+#         "--nowrite"
+#             action = :store_true
+#             help = "Do not write the mesh. For performance tests"
+#         "--intsize"
+#             help = "Number of bits used for integers"
+#             required = false
+#             arg_type = DataType
+#             default = Int32
+#    end
 
     println("Blockster")
 
-    parsedArgs::Dict{String, Any} = parse_args(s) 
+#    parsedArgs::Dict{String, Any} = parse_args(s) 
 
 
     #const Label::DataType = eval(parse("Int$(parsedArgs["intsize"])"))
-    const Label::DataType = parsedArgs["intsize"]
+    const Label = Int32
 
-    dictPath::String = parsedArgs["dictionary"]
-    nowrite::Bool = parsedArgs["nowrite"]
+    dictPath::String = joinpath("tests", "cube_simple.json")
+
+    nowrite::Bool = true
 
     # Parse the dictionary
     dict::DataStructures.OrderedDict = JSON.parsefile(dictPath,
