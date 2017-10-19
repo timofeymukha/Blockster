@@ -331,14 +331,13 @@ function create_topology(
     end #inbounds 
 
     return patchSizes, patchStarts, defaultPatchStart,
-           faces, nFaces, cellsAsFaces
+           faces, cellsAsFaces
 
 end
 
 
 function calc_merge_info(
     blocks::Vector{Block{Label}},
-    blockPoints::Vector{Point},
     blockFaces::Vector{Face{Label}},
     blockCellsAsFaces::Vector{Vector{Label}},
     faceOwnerBlocks::Vector{Label},

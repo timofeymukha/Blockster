@@ -67,47 +67,47 @@ function main(args)
     # blocks as cells
     blocksAsCells = [convert(Blockster.Cell{Label}, blocks[i]) for i in 1:nBlocks]
 
-    # blocks as surfaces 
-    blockFaces = [Blockster.cellfaces(blocksAsCells[i]) for i in 1:nBlocks]
+    # blocks as surface list
+    blocksAsSurfaceList = [Blockster.cellfaces(blocksAsCells[i]) for i in 1:nBlocks]
 
     # Create vertex to block adressing
     vertexBlockAddressing = Blockster.point_cell_addressing(blocksAsCells, nVertices)
 
     print("Creating block topology...")
-    patchSizes,
-    patchStarts,
-    defaultPatchStart,
-    faces,
-    nFaces,
-    cellsAsFaces = Blockster.create_topology(
+
+    defaultSurfaceStart,
+    surfaces,
+    blocksAsSurfaces = Blockster.create_topology(
                         blocksAsCells,
                         patchSurfaces,
                         patchNames,
                         vertexBlockAddressing,
                         nVertices
-                   )
+                    )[3:end]
     print(" Done\n")
 
-    nDefaultFaces = nFaces - defaultPatchStart
+    nSurfaces::Label = length(surfaces)
 
-    if nDefaultFaces > 0
-        error("Undefined block faces present in the mesh description")
+    nDefaultSurfaces = nSurfaces - defaultSurfaceStart
+
+    if nDefaultSurfaces > 0
+        error("Some boundary surfaces are not part of any patch.")
     end
 
-    owner, neighbour = Blockster.create_owner_neighbour(nFaces, cellsAsFaces)
+    ownerBlocks, neighbourBlocks =
+        Blockster.create_owner_neighbour(nSurfaces, blocksAsSurfaces)
 
-    nInternalFaces::Label = length(neighbour)
+    nInternalSurfaces::Label = length(neighbourBlocks)
 
     print("Creating merge list...")
     nCells, nPoints, blockOffsets, mergeList =
         Blockster.calc_merge_info(
             blocks,
-            vertices,
-            faces,
-            cellsAsFaces,
-            owner,
-            neighbour,
-            nInternalFaces
+            surfaces,
+            blocksAsSurfaces,
+            ownerBlocks,
+            neighbourBlocks,
+            nInternalSurfaces
         )
     print(" Done\n")
 
@@ -119,7 +119,6 @@ function main(args)
                  nPoints
              )
     print(" Done\n")
-    nPoints::Label = length(points)
 
     print("Creating global cell list...")
     cells = Blockster.create_cells(
@@ -135,10 +134,10 @@ function main(args)
                   blocks,
                   blockOffsets,
                   mergeList,
-                  blockFaces,
+                  blocksAsSurfaceList,
                   patchSurfaces,
-                  faces,
-                  owner
+                  surfaces,
+                  ownerBlocks
               )
     print(" Done\n")
 
@@ -150,7 +149,6 @@ function main(args)
     patchStarts,
     defaultPatchStart,
     faces,
-    nFaces,
     cellsAsFaces = Blockster.create_topology(
                        cells,
                        patches,
@@ -159,6 +157,8 @@ function main(args)
                        nPoints
                    )
     print(" Done\n")
+
+    nFaces::Label  = length(faces)
 
     print("Creating owner and neighbour lists...")
     owner, neighbour = Blockster.create_owner_neighbour(nFaces, cellsAsFaces)
