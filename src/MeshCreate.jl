@@ -26,10 +26,10 @@ function point_cell_addressing(
     end
 
     # For each cell
-    for cellI in 1:size(cells, 1)
+    for cellI in eachindex(cells)
 
         # For each point in the cell
-        for pointI in 1:size(cells[cellI], 1)
+        for pointI in eachindex(cells[cellI])
 
             currPoint = cells[cellI][pointI]
             # Add current cell to the addressing list
@@ -49,25 +49,25 @@ function patch_face_cells(
 
     @inbounds begin
 
-    faceCells = Vector{Label}(size(faces,1))
+    faceCells = Vector{Label}(length(faces))
 
     # For each face determine the cell
-    for faceI in 1:size(faces, 1)
+    for faceI in eachindex(faces)
 
         found = false
         currFace = faces[faceI]
 
         # For each point of the face
-        for facePointI in 1:size(currFace, 1)
+        for facePointI in eachindex(currFace)
             facePointCells = pointCellAddressing[currFace[facePointI]]
 
             # For each cell that this point is part of
-            for cellI in 1:size(facePointCells, 1)
+            for cellI in eachindex(facePointCells)
 
                 cellIFaces = cellFaces[facePointCells[cellI]]
 
                 # For each face of the cells check if it is the same as faceI
-                for cellIFaceI in 1:size(cellIFaces, 1)
+                for cellIFaceI in eachindex(cellIFaces)
 
                     if samepoints(cellIFaces[cellIFaceI], faces[faceI])
                         found = true
@@ -110,19 +110,19 @@ function create_topology(
     @inbounds begin
 
     # Define a vector of cells defined as face index vectors
-    cellsAsFaces = Vector{Vector{Label}}(size(cells, 1))
+    cellsAsFaces = Vector{Vector{Label}}(length(cells))
 
     # Get the faces of each cell and the maximum number of faces
-    cellFaces = Vector{Vector{Face{Label}}}(size(cells, 1))
+    cellFaces = Vector{Vector{Face{Label}}}(length(cells))
     maxFaces::Label = 0
 
-    for i in 1:size(cellFaces,1)
+    for i in eachindex(cellFaces)
         # get the faces of the cell
         cellFaces[i] = cellfaces(cells[i])
-        maxFaces += size(cellFaces[i],1)
+        maxFaces += length(cellFaces[i])
 
         # Set the associated face label to -1, to mark as undefined
-        cellsAsFaces[i] = fill(-1, size(cellFaces[i], 1))
+        cellsAsFaces[i] = fill(-1, length(cellFaces[i]))
     end
 
     # Declare the array of faces
@@ -137,20 +137,20 @@ function create_topology(
 
     # Add the non-boundary faces of all cells to the face list
     # Form the cellsAsFaces array
-    for cellI in 1:size(cells, 1)
+    for cellI in eachindex(cells)
 
         cellIFaces = cellFaces[cellI]
 
         # Record the neighbour cell
-        neiCells = fill(-1, size(cellIFaces))
+        neiCells = fill(Label(-1), length(cellIFaces))
 
         # Record the face of neighbour cell
-        faceOfNeiCell = fill(-1, size(cellIFaces))
+        faceOfNeiCell = fill(Label(-1), length(cellIFaces))
 
-        nNeighbours = 0
+        nNeighbours::Label = 0
 
         # Identify the neighbours for each face of the cell
-        for faceI in 1:size(cellIFaces, 1)
+        for faceI in eachindex(cellIFaces)
 
             # Skip faces that have already been matched
             if cellsAsFaces[cellI][faceI] > -1
@@ -162,12 +162,12 @@ function create_topology(
             # the current face we are matching    
             currFace = cellIFaces[faceI]
 
-            for pointI in 1:size(currFace, 1)
+            for pointI in eachindex(currFace)
 
                 # Get list of cells sharing this point
                 currNeighbours = pointCellAddr[currFace[pointI]]
 
-                for neiI in 1:size(currNeighbours, 1)
+                for neiI in eachindex(currNeighbours)
 
                     currNei = currNeighbours[neiI]
 
@@ -177,7 +177,7 @@ function create_topology(
                         # The list of faces to search through
                         neiFaces = cellFaces[currNei]
 
-                        for neiFaceI in 1:size(neiFaces, 1)
+                        for neiFaceI in eachindex(neiFaces)
 
                             if samepoints(neiFaces[neiFaceI], currFace)
                                 found = true
@@ -210,10 +210,10 @@ function create_topology(
         for neiSearch in 1:nNeighbours
 
             # Find the lowest neighbour which is still valid
-            nextNei = -1
-            minNei = size(cellsAsFaces, 1)
+            nextNei::Label = -1
+            minNei::Label = length(cellsAsFaces)
 
-            for ncI in 1:size(neiCells, 1)
+            for ncI in eachindex(neiCells)
                 if neiCells[ncI] > -1 && neiCells[ncI] <= minNei
                     nextNei = ncI
                     minNei = neiCells[ncI]
@@ -310,11 +310,11 @@ function create_topology(
     defaultPatchStart::Label = nFaces
 
     # Take care of "non-existing faces", put them into the default patch
-    for cellI in 1:size(cellsAsFaces, 1)
+    for cellI in eachindex(cellsAsFaces)
 
         currCellFaces = cellsAsFaces[cellI]
 
-        for faceI in 1:size(currCellFaces, 1)
+        for faceI in eachindex(currCellFaces)
             if currCellFaces[faceI] == -1
                 warn("Putting faces into default patch")
                 currCellFaces[faceI] = nFaces
@@ -347,7 +347,7 @@ function calc_merge_info(
 ) where {Label <: Union{Int32, Int64}}
     @inbounds begin
 
-    nBlocks::Label = size(blocks, 1)
+    nBlocks::Label = length(blocks)
     blockOffsets = Vector{Label}(nBlocks)
 
     nPoints::Label = 0
@@ -355,17 +355,17 @@ function calc_merge_info(
 
     for blockI in 1:nBlocks
         blockOffsets[blockI] = nPoints
-        nPoints += size(blocks[blockI].points, 1)
-        nCells += size(blocks[blockI].cells, 1)
+        nPoints += length(blocks[blockI].points)
+        nCells += length(blocks[blockI].cells)
     end
 
     mergeList = fill(Label(-1), nPoints)
 
-    glueMergePairs = Vector{Vector{Vector{Label}}}(size(blockFaces, 1))
+    glueMergePairs = Vector{Vector{Vector{Label}}}(length(blockFaces))
 
 
     # Go through all the faces in the topology
-    for sI in 1:size(blockFaces, 1)
+    for sI in eachindex(blockFaces)
 
         # Grab the owner of the face
         blockPLabel = faceOwnerBlocks[sI]
@@ -392,7 +392,7 @@ function calc_merge_info(
                    for block $blockPLabel")
         end
     
-        # faces on the block boundary (face)
+        # faces on the block surface
         blockPfaceFaces = blocks[blockPLabel].boundaryFaces[blockPfaceLabel]
 
         glueMergePairs[sI] = [Vector{Label}(1) 
@@ -403,17 +403,17 @@ function calc_merge_info(
 
         sqrMergeTol = 1e+6
 
-        # for all faces on the boundary
-        for fI in 1:size(blockPfaceFaces, 1)
+        # for all faces on the sirface
+        for fI in eachindex(blockPfaceFaces)
             
             # points of current face
             blockPfaceFacePoints = blockPfaceFaces[fI]
 
            
             # for all points of current face
-            for pI in 1:size(blockPfaceFacePoints, 1)
+            for pI in eachindex(blockPfaceFacePoints)
                 #compare to the other points on this face
-                for pI2 in 1:size(blockPfaceFacePoints, 1)
+                for pI2 in eachindex(blockPfaceFacePoints)
                     if pI != pI2
                     
                         magSqrDist = norm(
@@ -450,7 +450,7 @@ function calc_merge_info(
 
         sqrMergeTol /= 10
 
-        # if face is internal
+        # if suraface is internal
         if sI <= nInternalFaces
             blockNLabel = faceNeighbourBlocks[sI];
             blockNPoints = blocks[blockNLabel].points;
@@ -544,9 +544,9 @@ function calc_merge_info(
                     end
                 end
             end # for face in current blockface
-        end #if face is internal
+        end #if surface is internal
 
-     end # for all faces of blocks
+     end # for all surfaces of blocks
 
      blockInternalFaces = blockFaces[1:nInternalFaces]
      changedPointMerge = true 
@@ -914,11 +914,11 @@ function create_owner_neighbour(
 
     nInternalFaces::Label = 0
 
-    for cellI in 1:size(cellsAsFaces, 1)
+    for cellI in eachindex(cellsAsFaces)
 
         cellFaces = cellsAsFaces[cellI]
 
-        for faceI in 1:size(cellFaces, 1)
+        for faceI in eachindex(cellFaces)
             if cellFaces[faceI] < 1
                 faceLabel = cellFaces[cellI]
                 error("Illegal face label $faceLabel in cell $cellI")

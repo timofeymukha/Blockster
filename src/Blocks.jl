@@ -548,6 +548,3 @@ function create_cells!(block::Block{Label}) where {Label <: Integer}
         end
     end
 end
-
-
-#end

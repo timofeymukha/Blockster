@@ -92,7 +92,6 @@ function line_divide(
             sectionStartInd = sectionEndInd
         end
     else
-
         for i in 1:nDivisions
             divisions[i] = (i-1)/nDivisions 
         end

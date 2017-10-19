@@ -26,7 +26,7 @@ function main(args)
              default = Int32
     end
 
-    parsedArgs::Dict{String, Any} = parse_args(s) # the result is a Dict{String,Any}
+    parsedArgs::Dict{String, Any} = parse_args(s) 
 
 
     #const Label::DataType = eval(parse("Int$(parsedArgs["intsize"])"))
@@ -67,7 +67,7 @@ function main(args)
     # blocks as cells
     blocksAsCells = [convert(Blockster.Cell{Label}, blocks[i]) for i in 1:nBlocks]
 
-    # blocks as faces 
+    # blocks as surfaces 
     blockFaces = [Blockster.cellfaces(blocksAsCells[i]) for i in 1:nBlocks]
 
     # Create vertex to block adressing
@@ -87,8 +87,6 @@ function main(args)
                         nVertices
                    )
     print(" Done\n")
-
-    println(typeof(nFaces))
 
     nDefaultFaces = nFaces - defaultPatchStart
 
