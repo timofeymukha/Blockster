@@ -528,11 +528,13 @@ function calc_merge_info(
                                 minPointLabel = min(PPointLabel, NPointLabel)    
 
                                 if mergeList[PPointLabel] != -1
-                                    minPointLabel = min(minPN, mergeList[PPointLabel])
+                                    minPointLabel = 
+                                        min(minPointLabel, mergeList[PPointLabel])
                                 end
 
                                 if mergeList[NPointLabel] != -1
-                                    minPointLabel = min(minPN, mergeList[NPointLabel])
+                                    minPointLabel = 
+                                        min(minPointLabel, mergeList[NPointLabel])
                                 end
 
                                 mergeList[PPointLabel] = minPointLabel
