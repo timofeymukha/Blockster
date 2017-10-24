@@ -130,9 +130,6 @@ function create_topology(
 
     nFaces::Label = 1
 
-    # Get point to cell addressing
-    pointCellAddr = point_cell_addressing(cells, nPoints)
-
     found = false
 
     # Add the non-boundary faces of all cells to the face list
@@ -165,7 +162,7 @@ function create_topology(
             for pointI in eachindex(currFace)
 
                 # Get list of cells sharing this point
-                currNeighbours = pointCellAddr[currFace[pointI]]
+                currNeighbours = pointCellAddressing[currFace[pointI]]
 
                 for neiI in eachindex(currNeighbours)
 
