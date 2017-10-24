@@ -140,10 +140,10 @@ function create_boundary_faces!(block::Block{Label}) where {Label <: Integer}
         # y-direction
 
         # y-min
-        surfaceY += 1
+        surfaceI += 1
         wallFaceLabel = 1
 
-        block.boundaryFaces[surfaceY] = Vector{Face{Label}}(nX*nZ)
+        block.boundaryFaces[surfaceI] = Vector{Face{Label}}(nX*nZ)
         for i in 1:nX
             for k in 1:nZ
                 p1 = point_index(block, i, 1, k) 
