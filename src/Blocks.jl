@@ -84,16 +84,7 @@ function create_blocks(
 
     end
 
-
     return blocks
-end
-
-
-function convert(
-    ::Type{Cell{Label}},
-    block::Block{Label}
-) where {Label <: Integer}
-    return convert(Cell{Label}, block.vertexLabels)
 end
 
 function create_boundary_faces!(block::Block{Label}) where {Label <: Integer}
@@ -102,13 +93,13 @@ function create_boundary_faces!(block::Block{Label}) where {Label <: Integer}
         nY =  block.nCells[2]
         nZ =  block.nCells[3]
 
-        wallLabel::Label = 1
+        surfaceI::Label = 1
         wallFaceLabel::Label = 1
 
         # x-direction
 
         # x-min
-        block.boundaryFaces[wallLabel] = Vector{Face{Label}}(nY*nZ)
+        block.boundaryFaces[surfaceI] = Vector{Face{Label}}(nY*nZ)
         for k in 1:nZ
             for j in 1:nY
                 p1 = point_index(block, 1, j, k) 
@@ -118,18 +109,18 @@ function create_boundary_faces!(block::Block{Label}) where {Label <: Integer}
                 p3 = point_index(block, 1, j + 1, k + 1)
                     
                 p4 = point_index(block, 1, j + 1, k)
-                block.boundaryFaces[wallLabel][wallFaceLabel] = 
+                block.boundaryFaces[surfaceI][wallFaceLabel] = 
                     [p1, p2, p3, p4]        
 
                 wallFaceLabel += 1    
             end
         end
 
-        wallLabel += 1
+        surfaceI += 1
         wallFaceLabel = 1
 
         # x-max
-        block.boundaryFaces[wallLabel] = Vector{Face{Label}}(nY*nZ)
+        block.boundaryFaces[surfaceI] = Vector{Face{Label}}(nY*nZ)
         for k in 1:nZ
             for j in 1:nY
                 p1 = point_index(block, nX + 1, j, k) 
@@ -139,7 +130,7 @@ function create_boundary_faces!(block::Block{Label}) where {Label <: Integer}
                 p3 = point_index(block, nX + 1, j + 1, k + 1)
                     
                 p4 = point_index(block, nX + 1, j + 1, k)
-                block.boundaryFaces[wallLabel][wallFaceLabel] = 
+                block.boundaryFaces[surfaceI][wallFaceLabel] = 
                     [p1, p2, p3, p4]        
 
                 wallFaceLabel += 1    
@@ -149,10 +140,10 @@ function create_boundary_faces!(block::Block{Label}) where {Label <: Integer}
         # y-direction
 
         # y-min
-        wallLabel += 1
+        surfaceY += 1
         wallFaceLabel = 1
 
-        block.boundaryFaces[wallLabel] = Vector{Face{Label}}(nX*nZ)
+        block.boundaryFaces[surfaceY] = Vector{Face{Label}}(nX*nZ)
         for i in 1:nX
             for k in 1:nZ
                 p1 = point_index(block, i, 1, k) 
@@ -162,18 +153,18 @@ function create_boundary_faces!(block::Block{Label}) where {Label <: Integer}
                 p3 = point_index(block, i + 1, 1, k + 1)
                     
                 p4 = point_index(block, i, 1, k + 1)
-                block.boundaryFaces[wallLabel][wallFaceLabel] = 
+                block.boundaryFaces[surfaceI][wallFaceLabel] = 
                     [p1, p2, p3, p4]        
 
                 wallFaceLabel += 1    
             end
         end
 
-        wallLabel += 1
+        surfaceI += 1
         wallFaceLabel = 1
 
         # y-max
-        block.boundaryFaces[wallLabel] = Vector{Face{Label}}(nX*nZ)
+        block.boundaryFaces[surfaceI] = Vector{Face{Label}}(nX*nZ)
         for i in 1:nX
             for k in 1:nZ
                 p1 = point_index(block, i, nY + 1, k) 
@@ -183,7 +174,7 @@ function create_boundary_faces!(block::Block{Label}) where {Label <: Integer}
                 p3 = point_index(block, i + 1, nY + 1, k + 1)
                     
                 p4 = point_index(block, i, nY + 1, k + 1)
-                block.boundaryFaces[wallLabel][wallFaceLabel] = 
+                block.boundaryFaces[surfaceI][wallFaceLabel] = 
                     [p1, p2, p3, p4]        
 
                 wallFaceLabel += 1    
@@ -193,10 +184,10 @@ function create_boundary_faces!(block::Block{Label}) where {Label <: Integer}
         # z-direction
 
         # z-min
-        wallLabel += 1
+        surfaceI += 1
         wallFaceLabel = 1
 
-        block.boundaryFaces[wallLabel] = Vector{Face{Label}}(nX*nY)
+        block.boundaryFaces[surfaceI] = Vector{Face{Label}}(nX*nY)
         for i in 1:nX
             for j in 1:nY
                 p1 = point_index(block, i, j, 1) 
@@ -206,7 +197,7 @@ function create_boundary_faces!(block::Block{Label}) where {Label <: Integer}
                 p3 = point_index(block, i + 1, j + 1, 1)
                     
                 p4 = point_index(block, i + 1, j, 1)
-                block.boundaryFaces[wallLabel][wallFaceLabel] = 
+                block.boundaryFaces[surfaceI][wallFaceLabel] = 
                     [p1, p2, p3, p4]        
 
                 wallFaceLabel += 1    
@@ -214,10 +205,10 @@ function create_boundary_faces!(block::Block{Label}) where {Label <: Integer}
         end
 
         # z-max
-        wallLabel += 1
+        surfaceI += 1
         wallFaceLabel = 1
 
-        block.boundaryFaces[wallLabel] = Vector{Face{Label}}(nX*nY)
+        block.boundaryFaces[surfaceI] = Vector{Face{Label}}(nX*nY)
         for i in 1:nX
             for j in 1:nY
                 p1 = point_index(block, i, j, nZ + 1) 
@@ -227,7 +218,7 @@ function create_boundary_faces!(block::Block{Label}) where {Label <: Integer}
                 p3 = point_index(block, i + 1, j + 1, nZ + 1)
                     
                 p4 = point_index(block, i + 1, j, nZ + 1)
-                block.boundaryFaces[wallLabel][wallFaceLabel] = 
+                block.boundaryFaces[surfaceI][wallFaceLabel] = 
                     [p1, p2, p3, p4]        
 
                 wallFaceLabel += 1    
@@ -313,38 +304,7 @@ function setedge!(
      block.edgeWeights[edgeI]) = line_divide(edge, nDivisions, grading)
 end
 
-function point_index(
-    block::Block{Label},
-    i,
-    j,
-    k
-) where {Label <: Integer}
-    @inbounds begin
 
-    # Check bounds
-    if i < 1 || j < 1 || k < 1
-        error("point_index(): index less then 1")
-    elseif i > block.nCells[1] + 1 ||
-           j > block.nCells[2] + 1 ||
-           k > block.nCells[3] + 1
-        error("point_index(): index out of bounds")
-    end
-
-    end #inbounds
-
-    return i + (j-1)*(block.nCells[1] + 1) +
-               (k-1)*(block.nCells[1] + 1)*(block.nCells[2] + 1)
-end
-
-function npoints(block::Block{Label}) where {Label <: Integer}
-
-    return (block.nCells[1] + 1)*(block.nCells[2] + 1)*(block.nCells[3] + 1)
-end
-
-function ncells(block::Block{Label}) where {Label <: Integer}
-
-    return block.nCells[1]*block.nCells[2]*block.nCells[3]
-end
 
 function create_points!(block::Block{Label}) where {Label <: Integer}
 
@@ -547,4 +507,44 @@ function create_cells!(block::Block{Label}) where {Label <: Integer}
             end
         end
     end
+end
+
+function point_index(
+    block::Block{Label},
+    i,
+    j,
+    k
+) where {Label <: Integer}
+    @inbounds begin
+
+    # Check bounds
+    if i < 1 || j < 1 || k < 1
+        error("point_index(): index less then 1")
+    elseif i > block.nCells[1] + 1 ||
+           j > block.nCells[2] + 1 ||
+           k > block.nCells[3] + 1
+        error("point_index(): index out of bounds")
+    end
+
+    end #inbounds
+
+    return i + (j-1)*(block.nCells[1] + 1) +
+               (k-1)*(block.nCells[1] + 1)*(block.nCells[2] + 1)
+end
+
+function npoints(block::Block{Label}) where {Label <: Integer}
+
+    return (block.nCells[1] + 1)*(block.nCells[2] + 1)*(block.nCells[3] + 1)
+end
+
+function ncells(block::Block{Label}) where {Label <: Integer}
+
+    return block.nCells[1]*block.nCells[2]*block.nCells[3]
+end
+
+function convert(
+    ::Type{Cell{Label}},
+    block::Block{Label}
+) where {Label <: Integer}
+    return convert(Cell{Label}, block.vertexLabels)
 end
